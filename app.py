@@ -12,17 +12,17 @@ model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 # Funciones del core (las que definiste en el Paso 2)
 # Colócalas aquí dentro del mismo archivo app.py
 def explicar_concepto(tema):
-    prompt = f"""Eres un tutor de Física 1. Explica el concepto de {tema} de forma clara, concisa y paso a paso, como si se lo explicaras a un estudiante universitario. Incluye ejemplos si es pertinente."""
+    prompt = f"""Eres un tutor de Arquitectura de Redes. Explica el concepto de {tema} de forma clara, concisa y paso a paso, como si se lo explicaras a un estudiante universitario. Incluye ejemplos si es pertinente."""
     response = model.generate_content(prompt)
     return response.text
 
 def generar_ejercicio(tema, nivel):
-    prompt = f"""Eres un tutor de Física 1. Crea un problema nuevo y original sobre {tema} para un estudiante de nivel {nivel}. Asegúrate de que el problema sea relevante para el tema y el nivel de dificultad. No incluyas la solución."""
+    prompt = f"""Eres un tutor de Arquitectura de Redes. Crea un problema nuevo y original sobre {tema} para un estudiante de nivel {nivel}. Asegúrate de que el problema sea relevante para el tema y el nivel de dificultad. No incluyas la solución."""
     response = model.generate_content(prompt)
     return response.text
 
 def evaluar_respuesta_y_dar_feedback(ejercicio, respuesta_estudiante):
-    prompt = f"""Eres un tutor de Física 1. Tu tarea es evaluar la respuesta de un estudiante a un problema y proporcionar retroalimentación detallada.
+    prompt = f"""Eres un tutor de Arquitectura de Redes. Tu tarea es evaluar la respuesta de un estudiante a un problema y proporcionar retroalimentación detallada.
         Problema:
         {ejercicio}
     
@@ -40,11 +40,11 @@ def evaluar_respuesta_y_dar_feedback(ejercicio, respuesta_estudiante):
 
 def main():
     st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios")
-    st.markdown("¡Bienvenido! Estoy aquí para ayudarte con tus dudas de Física 1.")
+    st.markdown("¡Bienvenido! Estoy aquí para ayudarte con tus dudas de Arquitectura de Redes.")
     
     # Selectores para Tema y Nivel
-    temas = ["Cinemática", "Dinámica", "Trabajo y Energía", "Cantidad de Movimiento",
-             "Movimiento Rotacional", "Gravitación", "Oscilaciones", "Ondas", "Termodinámica"]
+    temas = [ "Modelo OSI", "TCP/IP", "Dispositivos de red", "Direcciones IP", "Switching y Routing",
+         "Protocolos de comunicación", "Redes LAN y WAN", "WiFi y redes inalámbricas", "Seguridad de red"]
     nivel_estudiante = st.selectbox("Selecciona tu nivel actual:", ["Básico", "Intermedio", "Avanzado"])
     tema_seleccionado = st.selectbox("Selecciona un tema:", temas)
     
