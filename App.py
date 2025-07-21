@@ -13,6 +13,12 @@ if "preguntas_correctas" not in st.session_state:
     st.session_state["preguntas_correctas"] = 0
 if "preguntas_incorrectas" not in st.session_state:
     st.session_state["preguntas_incorrectas"] = 0
+if "preguntas_lista" not in st.session_state:
+    st.session_state["preguntas_lista"] = []
+if "indice_pregunta_actual" not in st.session_state:
+    st.session_state["indice_pregunta_actual"] = 0
+if "respondiendo_examen" not in st.session_state:
+    st.session_state["respondiendo_examen"] = False
 
 # FUNCIONES
 
@@ -107,61 +113,52 @@ def main():
             st.info("Primero genera un ejercicio en la sección 'Proponer un Ejercicio'.")
 
     elif opcion == "📝 Examen de opción múltiple":
-        st.header("📝 Examen de opción múltiple sobre Arquitectura de Redes")
+        st.header("📝 Examen de opción múltiple pregunta por pregunta")
 
-        if "preguntas_lista" not in st.session_state:
-            st.session_state["preguntas_lista"] = []
-            st.session_state["respuestas_usuario"] = {}
-            st.session_state["preguntas_mostradas"] = False
+        if not st.session_state["respondiendo_examen"]:
+            if st.button("🟢 Comenzar Examen"):
+                with st.spinner("Generando preguntas..."):
+                    st.session_state["preguntas_lista"] = []
+                    st.session_state["indice_pregunta_actual"] = 0
+                    st.session_state["preguntas_correctas"] = 0
+                    st.session_state["preguntas_incorrectas"] = 0
+                    for _ in range(10):
+                        pregunta_bruta = generar_pregunta_opcion_multiple(tema_seleccionado)
+                        st.session_state["preguntas_lista"].append(pregunta_bruta)
+                    st.session_state["respondiendo_examen"] = True
+                st.experimental_rerun()
 
-        if st.button("🧩 Generar 10 preguntas"):
-            st.session_state["preguntas_lista"] = []
-            st.session_state["respuestas_usuario"] = {}
-            st.session_state["preguntas_mostradas"] = False
-            with st.spinner("Generando preguntas..."):
-                for _ in range(10):
-                    pregunta_bruta = generar_pregunta_opcion_multiple(tema_seleccionado)
-                    st.session_state["preguntas_lista"].append(pregunta_bruta)
-            st.session_state["preguntas_mostradas"] = True
+        else:
+            idx = st.session_state["indice_pregunta_actual"]
+            if idx < len(st.session_state["preguntas_lista"]):
+                pregunta_texto = st.session_state["preguntas_lista"][idx]
+                lineas = pregunta_texto.split("\n")
+                pregunta = next(l for l in lineas if l.startswith("Pregunta:")).split(":", 1)[1].strip()
+                opciones = [l for l in lineas if l.startswith(("A)", "B)", "C)", "D)"))]
+                respuesta_correcta = next(l for l in lineas if "Respuesta correcta:" in l).split(":")[1].strip()
+                justificacion = next(l for l in lineas if "Justificación:" in l).split(":", 1)[1].strip()
 
-        if st.session_state.get("preguntas_mostradas", False):
-            st.subheader("🧪 Responde a las siguientes preguntas:")
+                st.markdown(f"**{idx+1}. {pregunta}**")
+                seleccion = st.radio("Elige una opción:", opciones, key=f"respuesta_{idx}")
 
-            for idx, pregunta_texto in enumerate(st.session_state["preguntas_lista"]):
-                try:
-                    lineas = pregunta_texto.split("\n")
-                    pregunta = next(l for l in lineas if l.startswith("Pregunta:")).split(":", 1)[1].strip()
-                    opciones = [l for l in lineas if l.startswith(("A)", "B)", "C)", "D)"))]
-                    respuesta_correcta = next(l for l in lineas if "Respuesta correcta:" in l).split(":")[1].strip()
-                    justificacion = next(l for l in lineas if "Justificación:" in l).split(":", 1)[1].strip()
-
-                    st.markdown(f"**{idx+1}. {pregunta}**")
-                    seleccion = st.radio("Elige una opción:", opciones, key=f"preg_{idx}")
-
-                    if st.button(f"✔️ Verificar pregunta {idx+1}"):
-                        eleccion_usuario = st.session_state[f"preg_{idx}"][0]
-                        ya_respondida = f"resp_{idx}" in st.session_state["respuestas_usuario"]
-
-                        if not ya_respondida:
-                            if eleccion_usuario == respuesta_correcta:
-                                st.success("✅ ¡Correcto!")
-                                st.session_state["preguntas_correctas"] += 1
-                            else:
-                                st.error(f"❌ Incorrecto. La respuesta correcta era: {respuesta_correcta}")
-                                st.info(f"📘 Justificación: {justificacion}")
-                                st.session_state["preguntas_incorrectas"] += 1
-
-                            st.session_state["respuestas_usuario"][f"resp_{idx}"] = eleccion_usuario
-
-                        st.markdown("---")
-                except Exception as e:
-                    st.warning(f"Ocurrió un error en la pregunta {idx+1}.")
-                    st.text_area(f"Texto de la pregunta {idx+1}:", pregunta_texto)
-
-            if len(st.session_state["respuestas_usuario"]) == 10:
-                st.success("🎉 Has respondido todas las preguntas.")
+                if st.button("✔️ Verificar respuesta"):
+                    eleccion_usuario = st.session_state[f"respuesta_{idx}"][0]
+                    if eleccion_usuario == respuesta_correcta:
+                        st.success("✅ ¡Correcto!")
+                        st.session_state["preguntas_correctas"] += 1
+                    else:
+                        st.error(f"❌ Incorrecto. La respuesta correcta era: {respuesta_correcta}")
+                        st.info(f"📘 Justificación: {justificacion}")
+                        st.session_state["preguntas_incorrectas"] += 1
+                    st.session_state["indice_pregunta_actual"] += 1
+                    st.experimental_rerun()
+            else:
+                st.success("🎉 ¡Has completado el examen!")
                 st.write(f"✅ Correctas: {st.session_state['preguntas_correctas']}")
                 st.write(f"❌ Incorrectas: {st.session_state['preguntas_incorrectas']}")
+                if st.button("🔁 Reiniciar Examen"):
+                    st.session_state["respondiendo_examen"] = False
+                    st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
