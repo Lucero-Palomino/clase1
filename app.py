@@ -126,7 +126,7 @@ def parse_multiple_choice_question(raw_data):
 
 
 def main():
-    st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios")
+    st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES 01 para Universitarios")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte con tus dudas de Arquitectura de Redes.")
 
     # Selectores para Tema y Nivel
