@@ -36,7 +36,7 @@ def evaluar_respuesta_y_dar_feedback(ejercicio, respuesta_estudiante):
     return response.text
 
 def generar_pregunta_multiple_choice(tema, nivel):
-    prompt = f"""Eres un experto en Arquitectura de Redes. Crea una pregunta de opción múltiple sobre {tema} para un estudiante de nivel {nivel}. La pregunta debe tener 4 opciones de respuesta (A, B, C, D), de las cuales solo una es correcta.
+    prompt = f"""Eres un experto en Arquitectura de Redes. Crea una **pregunta nueva y original, diferente a las anteriores,** de opción múltiple sobre {tema} para un estudiante de nivel {nivel}. La pregunta debe tener 4 opciones de respuesta (A, B, C, D), de las cuales solo una es correcta.
     Formatea la salida estrictamente de la siguiente manera, sin texto adicional antes o después de este formato:
 
     Pregunta: [Tu pregunta aquí]
