@@ -1,14 +1,14 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-import random # Importar para barajar las opciones
-
+import random
+import re # Importar para usar expresiones regulares
 
 # Configurar Gemini API Key
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
-# Funciones del core (las que definiste en el Paso 2)
+# Funciones del core
 def explicar_concepto(tema):
     prompt = f"""Eres un tutor de Arquitectura de Redes. Explica el concepto de {tema} de forma clara, concisa y paso a paso, como si se lo explicaras a un estudiante universitario. Incluye ejemplos si es pertinente."""
     response = model.generate_content(prompt)
@@ -33,7 +33,8 @@ def evaluar_respuesta_y_dar_feedback(ejercicio, respuesta_estudiante):
     return response.text
 
 def generar_pregunta_multiple_choice(tema, nivel):
-    prompt = f"""Eres un experto en Arquitectura de Redes. Crea una pregunta de opción múltiple sobre {tema} para un estudiante de nivel {nivel}. La pregunta debe tener 4 opciones de respuesta (A, B, C, D), de las cuales solo una es correcta. Formatea la salida de la siguiente manera:
+    prompt = f"""Eres un experto en Arquitectura de Redes. Crea una pregunta de opción múltiple sobre {tema} para un estudiante de nivel {nivel}. La pregunta debe tener 4 opciones de respuesta (A, B, C, D), de las cuales solo una es correcta.
+    Formatea la salida estrictamente de la siguiente manera, sin texto adicional antes o después de este formato:
 
     Pregunta: [Tu pregunta aquí]
     A) [Opción A]
@@ -46,6 +47,79 @@ def generar_pregunta_multiple_choice(tema, nivel):
     response = model.generate_content(prompt)
     return response.text
 
+def parse_multiple_choice_question(raw_data):
+    """
+    Parsea la cadena de texto de la pregunta de opción múltiple generada por Gemini.
+    Retorna un diccionario con la pregunta, opciones, respuesta correcta y explicación,
+    o None si el parseo falla.
+    """
+    question_text = ""
+    options_raw = []
+    correct_answer_char = ""
+    explanation = ""
+
+    lines = raw_data.split('\n')
+    line_type = None
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        if line.startswith("Pregunta:"):
+            question_text = line.replace("Pregunta:", "").strip()
+            line_type = "question"
+        elif re.match(r"^[A-D]\)", line):
+            options_raw.append(line)
+            line_type = "option"
+        elif line.startswith("Respuesta Correcta:"):
+            correct_answer_match = re.search(r"Respuesta Correcta:\s*([A-D])", line)
+            if correct_answer_match:
+                correct_answer_char = correct_answer_match.group(1).strip()
+            line_type = "correct_answer"
+        elif line.startswith("Explicación:"):
+            explanation = line.replace("Explicación:", "").strip()
+            line_type = "explanation"
+        # Si la línea no coincide con un patrón conocido, pero estamos en un tipo de línea
+        # específico, podríamos intentar adjuntarla (ej. explicación multilinea)
+        elif line_type == "explanation":
+            explanation += " " + line # Para explicaciones que continúan en varias líneas
+        # Podríamos agregar lógica similar para preguntas u opciones multilinea si fuera necesario
+
+    # Validar que hemos encontrado todos los componentes esenciales
+    if not (question_text and len(options_raw) == 4 and correct_answer_char and explanation):
+        return None
+
+    # Barajar las opciones y mapear la respuesta correcta a la nueva letra
+    shuffled_options_with_correct = []
+    original_option_map = {}
+    for opt_raw in options_raw:
+        char = opt_raw[0]
+        original_option_map[opt_raw] = (char == correct_answer_char)
+        shuffled_options_with_correct.append(opt_raw)
+
+    random.shuffle(shuffled_options_with_correct)
+
+    new_correct_char = ''
+    new_options_display = []
+    for i, opt_display in enumerate(shuffled_options_with_correct):
+        char_label = chr(65 + i) # Genera A, B, C, D
+        # Eliminar el prefijo original (ej. "A)") para mostrar solo el texto de la opción
+        option_text = opt_display[3:].strip() if opt_display.startswith(tuple("ABCD)")) else opt_display.strip()
+        new_options_display.append(f"{char_label}) {option_text}")
+
+        if original_option_map.get(opt_display):
+            new_correct_char = char_label
+
+    if not new_correct_char: # Si por alguna razón no se encontró la respuesta correcta después de barajar
+        return None
+
+    return {
+        'question': question_text,
+        'options': new_options_display,
+        'correct_answer_char': new_correct_char,
+        'explanation': explanation
+    }
 
 def main():
     st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios")
@@ -95,6 +169,7 @@ def main():
         st.header("Examen de Arquitectura de Redes")
         st.markdown("Presiona 'Comenzar Ahora' para iniciar el examen de 10 preguntas.")
 
+        # Inicialización del estado del examen
         if 'exam_started' not in st.session_state:
             st.session_state['exam_started'] = False
             st.session_state['current_question_index'] = 0
@@ -102,7 +177,6 @@ def main():
             st.session_state['questions'] = []
             st.session_state['user_answers'] = []
             st.session_state['exam_finished'] = False
-
 
         if not st.session_state['exam_started']:
             if st.button("Comenzar Ahora"):
@@ -113,96 +187,14 @@ def main():
                 st.session_state['user_answers'] = []
                 st.session_state['exam_finished'] = False
                 with st.spinner("Generando preguntas del examen..."):
-                    for _ in range(10): # Generar 10 preguntas
-                        question_data_raw = generar_pregunta_multiple_choice(tema_seleccionado, nivel_estudiante)
-                        # Intentar parsear la pregunta
-                        try:
-                            question_parts = question_data_raw.split('\n')
-                            question_text = question_parts[0].replace('Pregunta: ', '').strip()
-                            options = [q.strip() for q in question_parts[1:5]]
-                            correct_answer_line = [q for q in question_parts if 'Respuesta Correcta:' in q][0]
-                            correct_answer_char = correct_answer_line.split(':')[1].strip()
-                            explanation_line = [q for q in question_parts if 'Explicación:' in q][0]
-                            explanation = explanation_line.split(':', 1)[1].strip()
-
-                            # Shuffle options to make sure the correct answer isn't always in the same spot
-                            shuffled_options_with_correct = []
-                            original_option_map = {}
-                            for opt in options:
-                                char = opt[0]
-                                if char == correct_answer_char:
-                                    original_option_map[opt] = True # Mark as correct
-                                else:
-                                    original_option_map[opt] = False # Mark as incorrect
-                                shuffled_options_with_correct.append(opt)
-
-                            random.shuffle(shuffled_options_with_correct)
-
-                            # Find the new position of the correct answer after shuffling
-                            new_correct_char = ''
-                            new_options_display = []
-                            for i, opt_display in enumerate(shuffled_options_with_correct):
-                                char_label = chr(65 + i) # A, B, C, D
-                                new_options_display.append(f"{char_label}) {opt_display[3:]}") # Remove original A) B) C) D)
-
-                                if original_option_map.get(opt_display):
-                                    new_correct_char = char_label
-
-
-                            st.session_state['questions'].append({
-                                'question': question_text,
-                                'options': new_options_display,
-                                'correct_answer_char': new_correct_char,
-                                'explanation': explanation
-                            })
-                        except Exception as e:
-                            st.warning(f"No se pudo parsear la pregunta. Saltando esta pregunta. Error: {e}\nRaw data: {question_data_raw}")
-                            # Si falla, genera otra pregunta para asegurar 10
-                            pass # allow loop to continue, next iteration will generate a new question if len < 10
-
-                    # Ensure we have 10 questions, regenerate if parsing failed for some
                     while len(st.session_state['questions']) < 10:
                         question_data_raw = generar_pregunta_multiple_choice(tema_seleccionado, nivel_estudiante)
-                        try:
-                            question_parts = question_data_raw.split('\n')
-                            question_text = question_parts[0].replace('Pregunta: ', '').strip()
-                            options_raw = [q.strip() for q in question_parts[1:5]]
-                            correct_answer_line = [q for q in question_parts if 'Respuesta Correcta:' in q][0]
-                            correct_answer_char = correct_answer_line.split(':')[1].strip()
-                            explanation_line = [q for q in question_parts if 'Explicación:' in q][0]
-                            explanation = explanation_line.split(':', 1)[1].strip()
-
-                            shuffled_options_with_correct = []
-                            original_option_map = {}
-                            for opt in options_raw:
-                                char = opt[0]
-                                if char == correct_answer_char:
-                                    original_option_map[opt] = True
-                                else:
-                                    original_option_map[opt] = False
-                                shuffled_options_with_correct.append(opt)
-
-                            random.shuffle(shuffled_options_with_correct)
-
-                            new_correct_char = ''
-                            new_options_display = []
-                            for i, opt_display in enumerate(shuffled_options_with_correct):
-                                char_label = chr(65 + i)
-                                new_options_display.append(f"{char_label}) {opt_display[3:]}")
-
-                                if original_option_map.get(opt_display):
-                                    new_correct_char = char_label
-
-                            st.session_state['questions'].append({
-                                'question': question_text,
-                                'options': new_options_display,
-                                'correct_answer_char': new_correct_char,
-                                'explanation': explanation
-                            })
-                        except Exception as e:
-                            st.warning(f"Re-generación: No se pudo parsear la pregunta. Saltando esta pregunta. Error: {e}\nRaw data: {question_data_raw}")
-
-
+                        parsed_question = parse_multiple_choice_question(question_data_raw)
+                        if parsed_question:
+                            st.session_state['questions'].append(parsed_question)
+                        else:
+                            st.warning(f"No se pudo parsear una pregunta. Reintentando... Datos crudos: {question_data_raw[:200]}...") # Mostrar un fragmento
+                            # El bucle while se encarga de reintentar hasta obtener 10 preguntas válidas
                 st.experimental_rerun() # Rerun para mostrar la primera pregunta
 
         if st.session_state['exam_started'] and not st.session_state['exam_finished']:
@@ -233,9 +225,9 @@ def main():
                             st.experimental_rerun() # Rerun to show next question
                     else:
                         st.warning("Por favor, selecciona una opción antes de continuar.")
-            else:
+            else: # Esto maneja el caso donde el índice va más allá de las preguntas (debería ser cubierto por el if anterior)
                 st.session_state['exam_finished'] = True
-                st.experimental_rerun() # In case somehow index goes out of bound
+                st.experimental_rerun()
 
         if st.session_state['exam_finished']:
             st.success(f"¡Examen Terminado! Has respondido correctamente a {st.session_state['score']} de {len(st.session_state['questions'])} preguntas.")
@@ -253,14 +245,11 @@ def main():
                 st.markdown(f"**Explicación:** {question_info['explanation']}")
 
             if st.button("Reiniciar Examen"):
-                del st.session_state['exam_started']
-                del st.session_state['current_question_index']
-                del st.session_state['score']
-                del st.session_state['questions']
-                del st.session_state['user_answers']
-                del st.session_state['exam_finished']
+                # Limpiar el estado de la sesión para reiniciar el examen
+                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished']:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 st.experimental_rerun()
-
 
 if __name__ == "__main__":
     main()
