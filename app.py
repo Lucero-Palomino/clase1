@@ -39,7 +39,7 @@ def evaluar_respuesta_y_dar_feedback(ejercicio, respuesta_estudiante):
     return response.text
 
 def main():
-    st.title("👨‍🏫 Chatbot de Física 1 para Universitarios")
+    st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte con tus dudas de Física 1.")
     
     # Selectores para Tema y Nivel
