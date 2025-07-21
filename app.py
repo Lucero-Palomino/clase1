@@ -8,7 +8,10 @@ import re # Importar para usar expresiones regulares
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
-# Funciones del core
+# Funciones del core (explicar_concepto, generar_ejercicio, evaluar_respuesta_y_dar_feedback, generar_pregunta_multiple_choice, parse_multiple_choice_question)
+# Mantén estas funciones tal cual las tienes de la última versión que te proporcioné.
+# No las repito aquí por brevedad, pero asegúrate de que estén en tu archivo app.py.
+
 def explicar_concepto(tema):
     prompt = f"""Eres un tutor de Arquitectura de Redes. Explica el concepto de {tema} de forma clara, concisa y paso a paso, como si se lo explicaras a un estudiante universitario. Incluye ejemplos si es pertinente."""
     response = model.generate_content(prompt)
@@ -121,6 +124,7 @@ def parse_multiple_choice_question(raw_data):
         'explanation': explanation
     }
 
+
 def main():
     st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte con tus dudas de Arquitectura de Redes.")
@@ -178,8 +182,9 @@ def main():
             st.session_state['user_answers'] = []
             st.session_state['exam_finished'] = False
 
+
         if not st.session_state['exam_started']:
-            if st.button("Comenzar Ahora"):
+            if st.button("Comenzar Ahora", key="start_exam_button"): # Add a unique key
                 st.session_state['exam_started'] = True
                 st.session_state['current_question_index'] = 0
                 st.session_state['score'] = 0
@@ -193,21 +198,36 @@ def main():
                         if parsed_question:
                             st.session_state['questions'].append(parsed_question)
                         else:
-                            st.warning(f"No se pudo parsear una pregunta. Reintentando... Datos crudos: {question_data_raw[:200]}...") # Mostrar un fragmento
-                            # El bucle while se encarga de reintentar hasta obtener 10 preguntas válidas
-                st.experimental_rerun() # Rerun para mostrar la primera pregunta
+                            st.warning(f"No se pudo parsear una pregunta. Reintentando... Datos crudos: {question_data_raw[:200]}...")
+                # NO LLAMAMOS st.experimental_rerun() AQUÍ
+                # Streamlit detectará el cambio en session_state y re-ejecutará automáticamente.
 
+        # La lógica para mostrar preguntas y manejar "Siguiente Pregunta"
         if st.session_state['exam_started'] and not st.session_state['exam_finished']:
             if st.session_state['current_question_index'] < len(st.session_state['questions']):
                 current_question = st.session_state['questions'][st.session_state['current_question_index']]
                 st.subheader(f"Pregunta {st.session_state['current_question_index'] + 1} de {len(st.session_state['questions'])}")
                 st.write(current_question['question'])
 
-                selected_option_label = st.radio("Elige una opción:", current_question['options'], key=f"q_{st.session_state['current_question_index']}")
+                # Use a unique key for the radio button
+                selected_option_label = st.radio(
+                    "Elige una opción:",
+                    current_question['options'],
+                    key=f"q_radio_{st.session_state['current_question_index']}" # Unique key for each question's radio
+                )
+
+                # Store the selected option immediately when it changes,
+                # not just when "Siguiente Pregunta" is clicked
+                if f"selected_option_{st.session_state['current_question_index']}" not in st.session_state:
+                    st.session_state[f"selected_option_{st.session_state['current_question_index']}"] = None
+
+                if selected_option_label:
+                    st.session_state[f"selected_option_{st.session_state['current_question_index']}"] = selected_option_label
 
                 if st.button("Siguiente Pregunta" if st.session_state['current_question_index'] < len(st.session_state['questions']) - 1 else "Terminar Examen"):
-                    if selected_option_label:
-                        user_answer_char = selected_option_label[0] # Get A, B, C, or D
+                    user_selected = st.session_state.get(f"selected_option_{st.session_state['current_question_index']}", None)
+                    if user_selected:
+                        user_answer_char = user_selected[0] # Get A, B, C, or D
                         st.session_state['user_answers'].append({
                             'question_index': st.session_state['current_question_index'],
                             'user_choice_char': user_answer_char,
@@ -218,16 +238,17 @@ def main():
                             st.session_state['score'] += 1
 
                         st.session_state['current_question_index'] += 1
+                        # We only need to rerun if we are transitioning to the next state (next question or results)
                         if st.session_state['current_question_index'] >= len(st.session_state['questions']):
                             st.session_state['exam_finished'] = True
-                            st.experimental_rerun() # Rerun to show results
-                        else:
-                            st.experimental_rerun() # Rerun to show next question
+                            # Optional: st.experimental_rerun() if you want an immediate jump,
+                            # but Streamlit might handle this automatically. Let's try without it first.
+                        # No need for st.experimental_rerun() here either; Streamlit handles state changes.
                     else:
                         st.warning("Por favor, selecciona una opción antes de continuar.")
-            else: # Esto maneja el caso donde el índice va más allá de las preguntas (debería ser cubierto por el if anterior)
+            else: # If current_question_index is somehow out of bounds
                 st.session_state['exam_finished'] = True
-                st.experimental_rerun()
+                # st.experimental_rerun() # Optional: if immediate re-render is desired
 
         if st.session_state['exam_finished']:
             st.success(f"¡Examen Terminado! Has respondido correctamente a {st.session_state['score']} de {len(st.session_state['questions'])} preguntas.")
@@ -244,12 +265,13 @@ def main():
                     st.error("Incorrecto.")
                 st.markdown(f"**Explicación:** {question_info['explanation']}")
 
-            if st.button("Reiniciar Examen"):
+            if st.button("Reiniciar Examen", key="reset_exam_button"): # Add a unique key
                 # Limpiar el estado de la sesión para reiniciar el examen
                 for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished']:
                     if key in st.session_state:
                         del st.session_state[key]
-                st.experimental_rerun()
+                st.experimental_rerun() # Rerun explicitly here to go back to initial state
+
 
 if __name__ == "__main__":
     main()
