@@ -192,6 +192,73 @@ def main():
             with st.spinner("Generando explicación..."):
                 explicacion = explicar_concepto(tema_seleccionado)
                 st.info(explicacion)
+            
+            # --- NUEVA SECCIÓN PARA ENLACES A PAPERS/DOCUMENTOS ---
+            st.markdown("### 📚 Recursos Adicionales para Profundizar")
+            st.markdown("Aquí te dejo enlaces a papers y documentos clave para este tema:")
+            
+            # Puedes usar una estructura de diccionario para mapear temas a sus recursos
+            recursos_por_tema = {
+                "Redes LAN": [
+                    {"tipo": "paper", "titulo": "IEEE 802.3 (Ethernet Standard)", "url": "https://standards.ieee.org/ieee/802.3/7328/"},
+                    {"tipo": "documento", "titulo": "Introducción a las Redes LAN (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/lan-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Fundamentos de Redes LAN (YouTube)", "url": "https://www.youtube.com/watch?v=F_f0S96sM8w"}
+                ],
+                "Protocolos de Red": [
+                    {"tipo": "paper", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
+                    {"tipo": "documento", "titulo": "Protocolos TCP/IP (IBM)", "url": "https://www.ibm.com/docs/es/aix/7.2?topic=protocols-tcpip"},
+                    {"tipo": "video", "titulo": "Qué son los protocolos de red (YouTube)", "url": "https://www.youtube.com/watch?v=0n-rJ7W-47g"}
+                ],
+                "Modelos OSI/TCP-IP": [
+                    {"tipo": "paper", "titulo": "ISO/IEC 7498 (OSI Model)", "url": "https://www.iso.org/standard/14299.html"},
+                    {"tipo": "documento", "titulo": "Comparación OSI y TCP/IP (Microsoft)", "url": "https://learn.microsoft.com/es-es/troubleshoot/windows-server/networking/tcpip-layer-model-vs-osi-layer-model"},
+                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=vv4y_m5_4gQ"}
+                ],
+                "Seguridad de Red": [
+                    {"tipo": "documento", "titulo": "NIST SP 800-12 (Introduction to Computer Security)", "url": "https://csrc.nist.gov/publications/detail/sp/800-12/rev-1/archive/1995-10-01"},
+                    {"tipo": "documento", "titulo": "Conceptos Básicos de Ciberseguridad (CISCO)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/cybersecurity-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Fundamentos de Ciberseguridad (YouTube)", "url": "https://www.youtube.com/watch?v=Vl3rKqM9wI0"}
+                ],
+                "Dispositivos de Red": [
+                    {"tipo": "documento", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=nN4rN9wN7v8"}
+                ],
+                "Direccionamiento IP": [
+                    {"tipo": "paper", "titulo": "RFC 790 (Assigned Numbers - Histórico IP)", "url": "https://www.ietf.org/rfc/rfc790.txt"},
+                    {"tipo": "documento", "titulo": "Direccionamiento IP (UNAM)", "url": "http://www.dgsca.unam.mx/publicaciones/curso/ip/ip-2.html"},
+                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=0d854y1t_1M"}
+                ],
+                "Enrutamiento": [
+                    {"tipo": "paper", "titulo": "RFC 1058 (RIP Version 1)", "url": "https://datatracker.ietf.org/doc/html/rfc1058"},
+                    {"tipo": "documento", "titulo": "Introducción al Enrutamiento (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/routing-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=W-r49j2_eI4"}
+                ],
+                "Conmutación": [
+                    {"tipo": "documento", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Switches: ¿Qué son y cómo funcionan? (YouTube)", "url": "https://www.youtube.com/watch?v=u8-hJv3f-9k"}
+                ],
+                "Subredes": [
+                    {"tipo": "documento", "titulo": "Subnetting (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Subred"},
+                    {"tipo": "video", "titulo": "Tutorial de Subnetting paso a paso (YouTube)", "url": "https://www.youtube.com/watch?v=eE7yG0XzFqc"}
+                ],
+                "Capa Física": [
+                    {"tipo": "documento", "titulo": "Capa Física del Modelo OSI (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Capa_f%C3%ADsica"},
+                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=S2uM-w7y1lM"}
+                ],
+                # Añade más temas y sus recursos aquí
+            }
+
+            if tema_seleccionado in recursos_por_tema:
+                for recurso in recursos_por_tema[tema_seleccionado]:
+                    if recurso["tipo"] == "paper":
+                        st.markdown(f"- 📄 **Paper:** [{recurso['titulo']}]({recurso['url']})")
+                    elif recurso["tipo"] == "documento":
+                        st.markdown(f"- 📝 **Documento:** [{recurso['titulo']}]({recurso['url']})")
+                    elif recurso["tipo"] == "video":
+                        st.markdown(f"- ▶️ **Video:** [{recurso['titulo']}]({recurso['url']})")
+            else:
+                st.info("Actualmente no hay recursos adicionales específicos para este tema. ¡Pero la explicación de Gemini te ayudará mucho!")
+
 
     with tab2:
         st.header(f"Ejercicio de {tema_seleccionado} (Nivel {nivel_estudiante})")
@@ -337,86 +404,69 @@ def main():
                     st.success("✅ ¡Correcto!")
                 else:
                     st.error("❌ Incorrecto.")
-                    # --- AQUÍ ES DONDE SE AÑADEN LAS IMÁGENES, VIDEOS Y AHORA LOS ENLACES ---
+                    # --- AQUÍ ES DONDE SE MANTIENEN IMÁGENES/VIDEOS PERO SIN ENLACES ADICIONALES ---
                     st.markdown(f"**Explicación:** {question_info['explanation']}")
 
                     # Convierte la pregunta a minúsculas para una comparación insensible a mayúsculas
                     q_lower = question_info['question'].lower()
 
-                    # --- EJEMPLOS CON IMÁGENES, VIDEOS Y ENLACES ADICIONALES ---
+                    # --- EJEMPLOS CON IMÁGENES Y VIDEOS (SIN ENLACES EXTERNOS AHORA) ---
 
                     if "capa física" in q_lower or "codificación" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Modem_diagram.svg/300px-Modem_diagram.svg.png",
                                  caption="Ejemplo de Codificación en Capa Física",
                                  width=300)
-                        st.markdown("🌐 Más información: [Wikipedia - Capa física](https://es.wikipedia.org/wiki/Capa_f%C3%ADsica)")
-                        st.markdown("▶️ Video: [La capa física del modelo OSI - YouTube](https://www.youtube.com/watch?v=S2uM-w7y1lM)") # Ejemplo de video
+                        st.markdown("_Este diagrama ilustra cómo se transforman los datos en señales físicas._")
                         
                     elif "capa de presentación" in q_lower or "cifrado" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cipher_block_chaining_decryption.svg/300px-Cipher_block_chaining_decryption.svg.png",
                                  caption="Proceso de Cifrado/Descifrado (Capa de Presentación)",
                                  width=300)
-                        st.markdown("🌐 Más información: [Wikipedia - Capa de presentación](https://es.wikipedia.org/wiki/Capa_de_presentaci%C3%B3n)")
-                        st.markdown("▶️ Video: [Funciones de la Capa de Presentación - YouTube](https://www.youtube.com/watch?v=EjKqX4L-tqM)")
+                        st.markdown("_La capa de presentación maneja la compresión y el cifrado._")
 
                     elif "conmutación de paquetes" in q_lower:
-                        st.video("https://www.youtube.com/watch?v=yW6hI1F8K-0") # Reemplaza con un URL de video real y relevante
+                        st.video("https://www.youtube.com/watch?v=yW6hI1F8K-0") 
                         st.markdown("_Video: ¿Cómo funciona la conmutación de paquetes?_")
-                        st.markdown("🌐 Más información: [Wikipedia - Conmutación de paquetes](https://es.wikipedia.org/wiki/Conmutaci%C3%B3n_de_paquetes)")
 
                     elif "ripv1" in q_lower or "enrutamiento" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Router_distance_vector_protocol_RIP.png/400px-Router_distance_vector_protocol_RIP.png",
                                  caption="Métrica de Saltos en RIP",
                                  width=400)
                         st.markdown("_RIP se basa solo en el conteo de saltos._")
-                        st.markdown("🌐 Más información: [Wikipedia - RIP](https://es.wikipedia.org/wiki/Routing_Information_Protocol)")
-                        st.markdown("▶️ Video: [Protocolo RIP - YouTube](https://www.youtube.com/watch?v=Vl3rKqM9wI0)") # Ejemplo de video
 
                     elif "dhcp" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/DHCP_Process.svg/400px-DHCP_Process.svg.png",
                                  caption="Proceso DORA de DHCP",
                                  width=400)
                         st.markdown("_El cliente puede recibir múltiples ofertas antes de elegir._")
-                        st.markdown("🌐 Más información: [Wikipedia - DHCP](https://es.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol)")
-                        st.markdown("▶️ Video: [¿Cómo funciona DHCP? - YouTube](https://www.youtube.com/watch?v=Y_r-Hj8Fj34)")
-
+                    
                     elif "conmutación de circuitos" in q_lower:
-                        st.video("https://www.youtube.com/watch?v=JmUa6s_t-6s") # Otro ejemplo de URL de video
+                        st.video("https://www.youtube.com/watch?v=JmUa6s_t-6s") 
                         st.markdown("_Video: Conmutación de Circuitos vs Paquetes._")
-                        st.markdown("🌐 Más información: [Wikipedia - Conmutación de circuitos](https://es.wikipedia.org/wiki/Conmutaci%C3%B3n_de_circuitos)")
 
                     elif "dns" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/DNS_query_example.svg/450px-DNS_query_example.svg.png",
                                  caption="Funcionamiento de DNS",
                                  width=450)
                         st.markdown("_El proceso de resolución de DNS inicia con la consulta al servidor recursivo._")
-                        st.markdown("🌐 Más información: [Wikipedia - DNS](https://es.wikipedia.org/wiki/Sistema_de_nombres_de_dominio)")
-                        st.markdown("▶️ Video: [¿Qué es el DNS y cómo funciona? - YouTube](https://www.youtube.com/watch?v=mpQZ_f6a19k)")
-
+                    
                     elif "tcp" in q_lower or "udp" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/TCP_UDP.svg/350px-TCP_UDP.svg.png",
                                  caption="Comparación TCP vs UDP",
                                  width=350)
                         st.markdown("_TCP garantiza fiabilidad, UDP se enfoca en la velocidad._")
-                        st.markdown("🌐 Más información: [Wikipedia - TCP](https://es.wikipedia.org/wiki/Protocolo_de_control_de_transmisi%C3%B3n)")
-                        st.markdown("🌐 Más información: [Wikipedia - UDP](https://es.wikipedia.org/wiki/User_Datagram_Protocol)")
-                        st.markdown("▶️ Video: [TCP vs UDP en 5 minutos - YouTube](https://www.youtube.com/watch?v=qqj1hJzDk6A)")
 
                     elif "topología de malla" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Mesh_topology.svg/400px-Mesh_topology.svg.png",
                                  caption="Topología de Malla Completa",
                                  width=400)
                         st.markdown("_Las mallas completas requieren muchos cables, elevando el coste._")
-                        st.markdown("🌐 Más información: [Wikipedia - Topología de malla](https://es.wikipedia.org/wiki/Topolog%C3%ADa_de_red#Malla)")
-                        st.markdown("▶️ Video: [Tipos de Topologías de Red - YouTube](https://www.youtube.com/watch?v=s8L91-03oD0)")
 
                     elif "csma/ca" in q_lower:
-                        st.video("https://www.youtube.com/watch?v=F07X648C-x0") # Un video corto sobre CSMA/CA
+                        st.video("https://www.youtube.com/watch?v=F07X648C-x0") 
                         st.markdown("_Video: Entendiendo CSMA/CA y su ventana de contención._")
-                        st.markdown("🌐 Más información: [Wikipedia - CSMA/CA](https://es.wikipedia.org/wiki/Acceso_m%C3%BAltiple_por_detecci%C3%B3n_de_portadora_con_prevenci%C3%B3n_de_colisiones)")
-
+                    
                     # Puedes añadir más `elif` o `if` con diferentes palabras clave y sus respectivos medios.
-                    # Asegúrate de reemplazar los URLs de ejemplo con URLs de imágenes y videos reales que hayas seleccionado.
 
                 st.markdown("---") # Separador para cada pregunta en los resultados
 
