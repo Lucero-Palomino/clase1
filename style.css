@@ -1,170 +1,54 @@
-/* Colores base para la aplicación */
-:root {
-    --primary-color: #4CAF50; /* Verde vibrante, como el de un botón de acción */
-    --secondary-color: #2196F3; /* Azul para énfasis, enlaces, etc. */
-    --background-color: #E8F5E9; /* Fondo muy claro, un verde/azul pastel */
-    --text-color: #333333; /* Texto oscuro principal */
-    --header-color: #1A5276; /* Azul marino para títulos */
-    --accent-color: #FFC107; /* Amarillo/naranja para advertencias o resaltados */
-    --success-color: #4CAF50; /* Verde para mensajes de éxito */
-    --error-color: #F44336; /* Rojo para mensajes de error */
-    --info-color: #03A9F4; /* Azul claro para mensajes de información */
-}
-
-/* Estilos generales del cuerpo de la aplicación */
-.main {
-    background-color: var(--background-color); /* Usamos la variable de fondo */
-    color: var(--text-color); /* Usamos la variable de texto */
-    font-family: 'Roboto', sans-serif; /* Fuente más moderna y legible */
-    padding: 20px;
-    border-radius: 10px; /* Bordes ligeramente redondeados */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para profundidad */
-}
-
-/* Título principal de la aplicación */
-h1 {
-    color: var(--header-color); /* Color azul marino para el título */
-    text-align: center;
-    font-family: 'Montserrat', sans-serif; /* Otra fuente llamativa */
-    margin-bottom: 30px;
-    font-size: 2.5em; /* Tamaño de fuente más grande */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Ligera sombra en el texto */
-}
-
-/* Subtítulos */
-h2, h3 {
-    color: var(--secondary-color); /* Azul para subtítulos */
-    border-bottom: 2px solid var(--secondary-color); /* Línea debajo del subtítulo */
-    padding-bottom: 5px;
-    margin-top: 30px;
-}
-
-/* Estilos de los botones */
-.stButton>button {
-    background-color: var(--primary-color); /* Color primario para botones */
-    color: white;
-    border: none; /* Sin borde */
-    border-radius: 12px; /* Más redondeado */
-    padding: 12px 25px; /* Más padding para que sean más grandes */
-    font-size: 1.1em; /* Fuente un poco más grande */
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out; /* Transición suave */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra en el botón */
-}
-.stButton>button:hover {
-    background-color: #388E3C; /* Un verde más oscuro al pasar el ratón */
-    transform: translateY(-3px); /* Efecto 3D al pasar el ratón */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Sombra más pronunciada */
-}
-
-/* Estilos para radios (opciones de examen) */
-.stRadio > label {
-    font-weight: bold;
-    color: var(--text-color);
-    font-size: 1.1em;
-    margin-bottom: 15px;
-}
-.stRadio div[role="radiogroup"] label {
-    padding: 12px 10px;
-    margin-left: 10px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease-in-out;
-}
-.stRadio div[role="radiogroup"] label:hover {
-    background-color: rgba(var(--secondary-color), 0.1); /* Ligero fondo azul al pasar el ratón */
-}
-
 /* Estilos para Selectbox (selectores de tema/nivel) */
 .stSelectbox > label {
     font-size: 1.1em;
     font-weight: bold;
-    color: var(--text-color);
+    color: var(--header-color); /* Usamos el color de los títulos para la etiqueta */
+    margin-bottom: 10px; /* Un poco de espacio debajo de la etiqueta */
 }
+
+/* Estilo del contenedor del Selectbox */
 .stSelectbox div[data-baseweb="select"] {
-    border-radius: 8px;
-    border: 1px solid var(--secondary-color); /* Borde azul */
-}
-
-/* Estilos para Text Area (respuesta del estudiante) */
-.stTextArea > label {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: var(--text-color);
-}
-.stTextArea div[data-baseweb="textarea"] textarea {
-    border-radius: 8px;
-    border: 1px solid var(--secondary-color);
-    padding: 10px;
-    min-height: 100px; /* Altura mínima */
-}
-
-/* Estilos para alertas (información, éxito, error, advertencia) */
-.stAlert {
-    border-radius: 8px;
-    font-size: 1.05em;
-    padding: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.stAlert.st-cq { /* Info */
-    background-color: rgba(var(--info-color), 0.1);
-    color: var(--info-color);
-    border-left: 5px solid var(--info-color);
-}
-.stAlert.st-cr { /* Success */
-    background-color: rgba(var(--success-color), 0.1);
-    color: var(--success-color);
-    border-left: 5px solid var(--success-color);
-}
-.stAlert.st-cl { /* Warning */
-    background-color: rgba(var(--accent-color), 0.1);
-    color: var(--accent-color);
-    border-left: 5px solid var(--accent-color);
-}
-.stAlert.st-cm { /* Error */
-    background-color: rgba(var(--error-color), 0.1);
-    color: var(--error-color);
-    border-left: 5px solid var(--error-color);
-}
-
-/* Líneas divisorias */
-hr {
-    border-top: 2px solid var(--secondary-color); /* Más visible */
-    margin: 20px 0;
-}
-
-/* Pestañas */
-.stTabs [data-baseweb="tab-list"] button {
-    background-color: var(--background-color);
-    color: var(--header-color); /* Color del texto de la pestaña inactiva */
-    font-weight: bold;
-    font-size: 1.1em;
-    border-radius: 8px 8px 0 0;
-    margin: 0 5px;
-    padding: 10px 20px;
+    border-radius: 12px; /* Más redondeado */
+    border: 2px solid var(--secondary-color); /* Borde azul más grueso */
+    background-color: white; /* Fondo blanco para el dropdown */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
     transition: all 0.3s ease-in-out;
 }
-.stTabs [data-baseweb="tab-list"] button:hover {
-    background-color: var(--secondary-color); /* Color de fondo al pasar el ratón */
-    color: white;
-}
-.stTabs [data-baseweb="tab-list"] [aria-selected="true"] {
-    background-color: var(--secondary-color); /* Color de la pestaña activa */
-    color: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+/* Efecto al pasar el ratón o al enfocar (click) */
+.stSelectbox div[data-baseweb="select"]:hover,
+.stSelectbox div[data-baseweb="select"]:focus-within {
+    border-color: var(--primary-color); /* Borde verde al interactuar */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
 }
 
-/* Estilos para el texto de marcado (Markdown) */
-p {
-    line-height: 1.6; /* Espaciado entre líneas */
+/* Estilo del texto dentro del Selectbox */
+.stSelectbox div[data-baseweb="select"] span[data-baseweb="typo"] {
+    color: var(--text-color); /* Color del texto de la opción seleccionada */
+    font-weight: 500;
 }
 
-strong {
-    color: var(--header-color); /* Negritas en el texto con un color distinto */
+/* Estilo de las opciones en el menú desplegable */
+.stSelectbox div[data-baseweb="popover"] div[role="listbox"] {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra para el menú desplegable */
+}
+.stSelectbox div[data-baseweb="popover"] div[role="option"] {
+    color: var(--text-color);
+    padding: 10px 15px;
+    transition: background-color 0.2s ease-in-out;
+}
+.stSelectbox div[data-baseweb="popover"] div[role="option"]:hover {
+    background-color: rgba(var(--primary-color-rgb, 0, 0, 0), 0.1); /* Fondo verde claro al pasar el ratón */
+    color: var(--primary-color); /* Texto verde al pasar el ratón */
 }
 
-/* Mejoras para las barras de progreso si las usas */
-.stProgress > div > div > div > div {
-    background-color: var(--primary-color);
-}
+/* Aquí he añadido una pequeña ayuda. Streamlit no expone fácilmente variables RGB directamente en CSS como las HEX.
+   Para usar 'rgba', a veces necesitamos los valores RGB. Puedes definirlos aquí si quieres un control muy fino.
+   Por ahora, usaremos una aproximación con 0,0,0 y solo el alfa.
+   Si quieres que este color de hover sea el mismo verde primario, puedes cambiarlo manualmente.
+   Ejemplo: rgba(76, 175, 80, 0.1) para el verde primario.
+   Para el verde #4CAF50, los valores RGB son 76, 175, 80.
+   Podríamos añadir: --primary-color-rgb: 76, 175, 80; en :root
+*/
