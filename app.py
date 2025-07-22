@@ -199,8 +199,8 @@ def main():
         if st.button("Generar Ejercicio :brain:", key="generate_exercise_button"):
             with st.spinner("Generando ejercicio..."):
                 ejercicio = generar_ejercicio(tema_seleccionado, nivel_estudiante)
-                st.session_state['current_exercise'] = ejercicio
-                st.success(ejercicio)
+            st.session_state['current_exercise'] = ejercicio
+            st.success(ejercicio)
             st.info("Ahora puedes ir a 'Evaluar mi Respuesta' para obtener retroalimentación.")
 
     with tab3:
@@ -214,7 +214,7 @@ def main():
                 if respuesta_estudiante:
                     with st.spinner("Evaluando y generando feedback..."):
                         feedback = evaluar_respuesta_y_dar_feedback(st.session_state['current_exercise'], respuesta_estudiante)
-                        st.markdown(feedback)
+                    st.markdown(feedback)
                 else:
                     st.warning("Por favor, escribe tu respuesta para evaluar.")
         else:
@@ -332,11 +332,76 @@ def main():
                 st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}")
                 st.markdown(f"Tu respuesta: **{user_ans['user_choice_char']}**")
                 st.markdown(f"Respuesta correcta: **{user_ans['correct_char']}**")
+                
                 if user_ans['user_choice_char'] == user_ans['correct_char']:
                     st.success("✅ ¡Correcto!")
                 else:
                     st.error("❌ Incorrecto.")
-                st.markdown(f"**Explicación:** {question_info['explanation']}")
+                    # --- AQUÍ ES DONDE DEBES COLOCAR LOS VIDEOS O IMÁGENES ---
+                    st.markdown(f"**Explicación:** {question_info['explanation']}")
+
+                    # EJEMPLOS: Usa condiciones para mostrar el multimedia adecuado
+                    # Convierte la pregunta a minúsculas para una comparación insensible a mayúsculas
+                    q_lower = question_info['question'].lower()
+
+                    if "capa física" in q_lower or "codificación" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Modem_diagram.svg/300px-Modem_diagram.svg.png",
+                                 caption="Ejemplo de Codificación en Capa Física",
+                                 width=300)
+                        st.markdown("_Este diagrama ilustra cómo se transforman los datos en señales físicas._")
+
+                    elif "capa de presentación" in q_lower or "cifrado" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cipher_block_chaining_decryption.svg/300px-Cipher_block_chaining_decryption.svg.png",
+                                 caption="Proceso de Cifrado/Descifrado (Capa de Presentación)",
+                                 width=300)
+                        st.markdown("_La capa de presentación maneja la compresión y el cifrado._")
+
+                    elif "conmutación de paquetes" in q_lower:
+                        st.video("https://www.youtube.com/watch?v=yW6hI1F8K-0") # Reemplaza con un URL de video real y relevante
+                        st.markdown("_Video: ¿Cómo funciona la conmutación de paquetes?_")
+
+                    elif "ripv1" in q_lower or "enrutamiento" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Router_distance_vector_protocol_RIP.png/400px-Router_distance_vector_protocol_RIP.png",
+                                 caption="Métrica de Saltos en RIP",
+                                 width=400)
+                        st.markdown("_RIP se basa solo en el conteo de saltos._")
+
+                    elif "dhcp" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/DHCP_Process.svg/400px-DHCP_Process.svg.png",
+                                 caption="Proceso DORA de DHCP",
+                                 width=400)
+                        st.markdown("_El cliente puede recibir múltiples ofertas antes de elegir._")
+                    
+                    elif "conmutación de circuitos" in q_lower:
+                        st.video("https://www.youtube.com/watch?v=JmUa6s_t-6s") # Otro ejemplo de URL de video
+                        st.markdown("_Video: Conmutación de Circuitos vs Paquetes._")
+
+                    elif "dns" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/DNS_query_example.svg/450px-DNS_query_example.svg.png",
+                                 caption="Funcionamiento de DNS",
+                                 width=450)
+                        st.markdown("_El proceso de resolución de DNS inicia con la consulta al servidor recursivo._")
+                    
+                    elif "tcp" in q_lower or "udp" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/TCP_UDP.svg/350px-TCP_UDP.svg.png",
+                                 caption="Comparación TCP vs UDP",
+                                 width=350)
+                        st.markdown("_TCP garantiza fiabilidad, UDP se enfoca en la velocidad._")
+
+                    elif "topología de malla" in q_lower:
+                        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Mesh_topology.svg/400px-Mesh_topology.svg.png",
+                                 caption="Topología de Malla Completa",
+                                 width=400)
+                        st.markdown("_Las mallas completas requieren muchos cables, elevando el coste._")
+
+                    elif "csma/ca" in q_lower:
+                        st.video("https://www.youtube.com/watch?v=F07X648C-x0") # Un video corto sobre CSMA/CA
+                        st.markdown("_Video: Entendiendo CSMA/CA y su ventana de contención._")
+                    
+                    # Puedes añadir más `elif` o `if` con diferentes palabras clave y sus respectivos medios.
+                    # Asegúrate de reemplazar los URLs de ejemplo con URLs de imágenes y videos reales que hayas seleccionado.
+
+                st.markdown("---") # Separador para cada pregunta en los resultados
 
             st.markdown("---")
             if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
