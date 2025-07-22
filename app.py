@@ -337,67 +337,84 @@ def main():
                     st.success("✅ ¡Correcto!")
                 else:
                     st.error("❌ Incorrecto.")
-                    # --- AQUÍ ES DONDE DEBES COLOCAR LOS VIDEOS O IMÁGENES ---
+                    # --- AQUÍ ES DONDE SE AÑADEN LAS IMÁGENES, VIDEOS Y AHORA LOS ENLACES ---
                     st.markdown(f"**Explicación:** {question_info['explanation']}")
 
-                    # EJEMPLOS: Usa condiciones para mostrar el multimedia adecuado
                     # Convierte la pregunta a minúsculas para una comparación insensible a mayúsculas
                     q_lower = question_info['question'].lower()
+
+                    # --- EJEMPLOS CON IMÁGENES, VIDEOS Y ENLACES ADICIONALES ---
 
                     if "capa física" in q_lower or "codificación" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Modem_diagram.svg/300px-Modem_diagram.svg.png",
                                  caption="Ejemplo de Codificación en Capa Física",
                                  width=300)
-                        st.markdown("_Este diagrama ilustra cómo se transforman los datos en señales físicas._")
-
+                        st.markdown("🌐 Más información: [Wikipedia - Capa física](https://es.wikipedia.org/wiki/Capa_f%C3%ADsica)")
+                        st.markdown("▶️ Video: [La capa física del modelo OSI - YouTube](https://www.youtube.com/watch?v=S2uM-w7y1lM)") # Ejemplo de video
+                        
                     elif "capa de presentación" in q_lower or "cifrado" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cipher_block_chaining_decryption.svg/300px-Cipher_block_chaining_decryption.svg.png",
                                  caption="Proceso de Cifrado/Descifrado (Capa de Presentación)",
                                  width=300)
-                        st.markdown("_La capa de presentación maneja la compresión y el cifrado._")
+                        st.markdown("🌐 Más información: [Wikipedia - Capa de presentación](https://es.wikipedia.org/wiki/Capa_de_presentaci%C3%B3n)")
+                        st.markdown("▶️ Video: [Funciones de la Capa de Presentación - YouTube](https://www.youtube.com/watch?v=EjKqX4L-tqM)")
 
                     elif "conmutación de paquetes" in q_lower:
                         st.video("https://www.youtube.com/watch?v=yW6hI1F8K-0") # Reemplaza con un URL de video real y relevante
                         st.markdown("_Video: ¿Cómo funciona la conmutación de paquetes?_")
+                        st.markdown("🌐 Más información: [Wikipedia - Conmutación de paquetes](https://es.wikipedia.org/wiki/Conmutaci%C3%B3n_de_paquetes)")
 
                     elif "ripv1" in q_lower or "enrutamiento" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Router_distance_vector_protocol_RIP.png/400px-Router_distance_vector_protocol_RIP.png",
                                  caption="Métrica de Saltos en RIP",
                                  width=400)
                         st.markdown("_RIP se basa solo en el conteo de saltos._")
+                        st.markdown("🌐 Más información: [Wikipedia - RIP](https://es.wikipedia.org/wiki/Routing_Information_Protocol)")
+                        st.markdown("▶️ Video: [Protocolo RIP - YouTube](https://www.youtube.com/watch?v=Vl3rKqM9wI0)") # Ejemplo de video
 
                     elif "dhcp" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/DHCP_Process.svg/400px-DHCP_Process.svg.png",
                                  caption="Proceso DORA de DHCP",
                                  width=400)
                         st.markdown("_El cliente puede recibir múltiples ofertas antes de elegir._")
-                    
+                        st.markdown("🌐 Más información: [Wikipedia - DHCP](https://es.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol)")
+                        st.markdown("▶️ Video: [¿Cómo funciona DHCP? - YouTube](https://www.youtube.com/watch?v=Y_r-Hj8Fj34)")
+
                     elif "conmutación de circuitos" in q_lower:
                         st.video("https://www.youtube.com/watch?v=JmUa6s_t-6s") # Otro ejemplo de URL de video
                         st.markdown("_Video: Conmutación de Circuitos vs Paquetes._")
+                        st.markdown("🌐 Más información: [Wikipedia - Conmutación de circuitos](https://es.wikipedia.org/wiki/Conmutaci%C3%B3n_de_circuitos)")
 
                     elif "dns" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/DNS_query_example.svg/450px-DNS_query_example.svg.png",
                                  caption="Funcionamiento de DNS",
                                  width=450)
                         st.markdown("_El proceso de resolución de DNS inicia con la consulta al servidor recursivo._")
-                    
+                        st.markdown("🌐 Más información: [Wikipedia - DNS](https://es.wikipedia.org/wiki/Sistema_de_nombres_de_dominio)")
+                        st.markdown("▶️ Video: [¿Qué es el DNS y cómo funciona? - YouTube](https://www.youtube.com/watch?v=mpQZ_f6a19k)")
+
                     elif "tcp" in q_lower or "udp" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/TCP_UDP.svg/350px-TCP_UDP.svg.png",
                                  caption="Comparación TCP vs UDP",
                                  width=350)
                         st.markdown("_TCP garantiza fiabilidad, UDP se enfoca en la velocidad._")
+                        st.markdown("🌐 Más información: [Wikipedia - TCP](https://es.wikipedia.org/wiki/Protocolo_de_control_de_transmisi%C3%B3n)")
+                        st.markdown("🌐 Más información: [Wikipedia - UDP](https://es.wikipedia.org/wiki/User_Datagram_Protocol)")
+                        st.markdown("▶️ Video: [TCP vs UDP en 5 minutos - YouTube](https://www.youtube.com/watch?v=qqj1hJzDk6A)")
 
                     elif "topología de malla" in q_lower:
                         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Mesh_topology.svg/400px-Mesh_topology.svg.png",
                                  caption="Topología de Malla Completa",
                                  width=400)
                         st.markdown("_Las mallas completas requieren muchos cables, elevando el coste._")
+                        st.markdown("🌐 Más información: [Wikipedia - Topología de malla](https://es.wikipedia.org/wiki/Topolog%C3%ADa_de_red#Malla)")
+                        st.markdown("▶️ Video: [Tipos de Topologías de Red - YouTube](https://www.youtube.com/watch?v=s8L91-03oD0)")
 
                     elif "csma/ca" in q_lower:
                         st.video("https://www.youtube.com/watch?v=F07X648C-x0") # Un video corto sobre CSMA/CA
                         st.markdown("_Video: Entendiendo CSMA/CA y su ventana de contención._")
-                    
+                        st.markdown("🌐 Más información: [Wikipedia - CSMA/CA](https://es.wikipedia.org/wiki/Acceso_m%C3%BAltiple_por_detecci%C3%B3n_de_portadora_con_prevenci%C3%B3n_de_colisiones)")
+
                     # Puedes añadir más `elif` o `if` con diferentes palabras clave y sus respectivos medios.
                     # Asegúrate de reemplazar los URLs de ejemplo con URLs de imágenes y videos reales que hayas seleccionado.
 
