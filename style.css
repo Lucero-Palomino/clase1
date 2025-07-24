@@ -1,217 +1,497 @@
-/* Colores base para la aplicación */
+/* Importar fuentes de Google Fonts al inicio del archivo */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+/* Colores base para la aplicación - Ajustados para una paleta más armoniosa y moderna */
 :root {
-    --primary-color: #4CAF50; /* Verde vibrante, como el de un botón de acción */
-    --secondary-color: #2196F3; /* Azul para énfasis, enlaces, etc. */
-    --background-color: #E8F5E9; /* Fondo muy claro, un verde/azul pastel */
-    --text-color: #333333; /* Texto oscuro principal */
-    --header-color: #1A5276; /* Azul marino para títulos */
-    --accent-color: #FFC107; /* Amarillo/naranja para advertencias o resaltados */
-    --success-color: #4CAF50; /* Verde para mensajes de éxito */
-    --error-color: #F44336; /* Rojo para mensajes de error */
-    --info-color: #03A9F4; /* Azul claro para mensajes de información */
-    --primary-color-rgb: 76, 175, 80; /* RGB para uso en rgba() si es necesario */
+    --primary-color: #28a745; /* Verde más profundo y profesional (similar a un verde esmeralda) */
+    --primary-light: #5cb85c; /* Versión más clara del primario para hover o fondos sutiles */
+    --secondary-color: #007bff; /* Azul vibrante, un estándar para enlaces y énfasis */
+    --secondary-light: #66afe9; /* Azul más claro para algunos detalles */
+    --background-color: #f8f9fa; /* Fondo blanco roto, muy suave y limpio */
+    --text-color: #343a40; /* Gris oscuro para el texto principal, muy legible */
+    --header-color: #212529; /* Negro muy oscuro o gris muy oscuro para los títulos */
+    --accent-color: #ffc107; /* Amarillo/naranja para advertencias o resaltados (se mantiene) */
+    --success-color: #28a745; /* Verde para mensajes de éxito (coincide con primary) */
+    --error-color: #dc3545; /* Rojo más suave para mensajes de error */
+    --info-color: #17a2b8; /* Azul teal para mensajes de información */
+    --warning-color: #ffc107; /* Naranja para advertencias */
+
+    /* RGB para uso en rgba() si es necesario, basados en los colores ajustados */
+    --primary-color-rgb: 40, 167, 69;
+    --secondary-color-rgb: 0, 123, 255;
+    --text-color-rgb: 52, 58, 64;
 }
 
 /* Estilos generales del cuerpo de la aplicación */
-.main {
+/* Streamlit envuelve todo en un div con id 'root' y luego 'main' */
+#root > div:nth-child(1) > div > div > div.stApp {
     background-color: var(--background-color); /* Usamos la variable de fondo */
     color: var(--text-color); /* Usamos la variable de texto */
     font-family: 'Roboto', sans-serif; /* Fuente más moderna y legible */
-    padding: 20px;
-    border-radius: 10px; /* Bordes ligeramente redondeados */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para profundidad */
+    padding: 0; /* Eliminamos el padding del main global, lo manejaremos en contenedores específicos */
+    margin: 0;
 }
+
+/* Estilo para el contenedor principal del contenido de Streamlit */
+.stApp > header {
+    background-color: white; /* Fondo blanco para la barra superior si existe */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Sombra muy sutil */
+}
+
+/* Contenedor principal del contenido, donde se aplica el estilo de 'card' */
+.main .block-container {
+    padding: 40px 60px; /* Más padding para que el contenido respire */
+    max-width: 1200px; /* Ancho máximo para el contenido para evitar que se estire demasiado en pantallas grandes */
+    margin: 0 auto; /* Centrar el contenedor */
+    background-color: white; /* Fondo blanco para el contenido principal */
+    border-radius: 12px; /* Bordes redondeados más pronunciados */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Sombra más suave y extendida para un look premium */
+    margin-top: 30px; /* Margen superior para separarlo del borde de la ventana/header */
+    margin-bottom: 30px; /* Margen inferior */
+}
+
 
 /* Título principal de la aplicación */
 h1 {
     color: var(--header-color); /* Color azul marino para el título */
     text-align: center;
     font-family: 'Montserrat', sans-serif; /* Otra fuente llamativa */
-    margin-bottom: 30px;
-    font-size: 2.5em; /* Tamaño de fuente más grande */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Ligera sombra en el texto */
+    margin-bottom: 40px; /* Más espacio debajo del título */
+    font-size: 3em; /* Tamaño de fuente más grande */
+    font-weight: 700; /* Negrita para un impacto visual */
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.15); /* Sombra más pronunciada para profundidad */
+    line-height: 1.2;
+    padding-top: 20px; /* Un poco de padding arriba del título */
 }
 
 /* Subtítulos */
 h2, h3 {
     color: var(--secondary-color); /* Azul para subtítulos */
-    border-bottom: 2px solid var(--secondary-color); /* Línea debajo del subtítulo */
-    padding-bottom: 5px;
-    margin-top: 30px;
+    border-bottom: 2px solid rgba(var(--secondary-color-rgb), 0.3); /* Línea más suave debajo del subtítulo */
+    padding-bottom: 8px; /* Más padding para la línea */
+    margin-top: 40px; /* Más espacio encima */
+    margin-bottom: 20px; /* Más espacio debajo */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 1.8em; /* H2 un poco más grande */
 }
 
+h3 {
+    font-size: 1.4em; /* H3 ligeramente más pequeño */
+    color: var(--text-color); /* H3 en color de texto principal */
+    border-bottom: 1px solid rgba(var(--text-color-rgb), 0.1); /* Línea más sutil para H3 */
+}
+
+
 /* Estilos de los botones */
-.stButton>button {
+.stButton > button {
     background-color: var(--primary-color); /* Color primario para botones */
     color: white;
     border: none; /* Sin borde */
-    border-radius: 12px; /* Más redondeado */
-    padding: 12px 25px; /* Más padding para que sean más grandes */
-    font-size: 1.1em; /* Fuente un poco más grande */
-    font-weight: bold;
+    border-radius: 8px; /* Ligeramente menos redondeado para un look más moderno */
+    padding: 14px 30px; /* Más padding para que sean más grandes y cómodos al click */
+    font-size: 1.15em; /* Fuente un poco más grande */
+    font-weight: 600; /* Más negrita */
     cursor: pointer;
-    transition: all 0.3s ease-in-out; /* Transición suave */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra en el botón */
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1); /* Transición suave con curva de aceleración */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra en el botón */
+    letter-spacing: 0.5px; /* Ligero espaciado entre letras */
 }
-.stButton>button:hover {
-    background-color: #388E3C; /* Un verde más oscuro al pasar el ratón */
-    transform: translateY(-3px); /* Efecto 3D al pasar el ratón */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Sombra más pronunciada */
+.stButton > button:hover {
+    background-color: var(--primary-light); /* Usamos el verde claro al pasar el ratón */
+    transform: translateY(-5px); /* Efecto 3D al pasar el ratón más pronunciado */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Sombra más pronunciada */
+}
+.stButton > button:active {
+    transform: translateY(-2px); /* Un pequeño "push" al hacer clic */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Estilos para radios (opciones de examen y acción principal) */
 .stRadio > label {
-    font-weight: bold;
-    color: var(--text-color); /* Color del texto de la etiqueta principal del radio button */
-    font-size: 1.1em;
-    margin-bottom: 15px;
+    font-weight: 600; /* Más negrita */
+    color: var(--header-color); /* Color de título para la etiqueta principal */
+    font-size: 1.2em; /* Un poco más grande */
+    margin-bottom: 20px; /* Más espacio debajo */
+    display: block; /* Asegura que la etiqueta tome su propia línea */
+}
+
+/* Contenedor de las opciones de radio */
+.stRadio div[role="radiogroup"] {
+    background-color: #ffffff; /* Fondo blanco para las opciones de radio */
+    border-radius: 10px;
+    padding: 15px 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra sutil para el grupo de opciones */
 }
 
 /* Estilo general para las opciones individuales de los radio buttons */
 .stRadio div[role="radiogroup"] label {
-    padding: 10px 0; /* Padding vertical, sin horizontal para un look más compacto */
-    margin-left: 0px; /* Eliminar margen izquierdo si quieres que el círculo esté más pegado al texto */
-    border-radius: 0px; /* Quitamos el redondeado para un look más cuadrado/minimalista */
-    transition: background-color 0.2s ease-in-out;
+    padding: 12px 10px; /* Más padding vertical */
+    margin: 5px 0; /* Espacio entre opciones */
+    border-radius: 8px; /* Bordes ligeramente redondeados para cada opción */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
     color: var(--text-color); /* Color del texto de la opción */
-    font-size: 1em; /* Ajustar tamaño de fuente */
-    font-weight: normal; /* No negrita por defecto */
+    font-size: 1.05em; /* Ajustar tamaño de fuente */
+    font-weight: 400; /* Normal por defecto */
+    display: flex; /* Para alinear el círculo y el texto */
+    align-items: center; /* Centrar verticalmente */
+    cursor: pointer; /* Indica que es clickeable */
 }
 
 /* Estilo al pasar el ratón sobre una opción de radio */
 .stRadio div[role="radiogroup"] label:hover {
-    background-color: rgba(var(--secondary-color), 0.05); /* Muy ligero fondo azul al pasar el ratón */
+    background-color: rgba(var(--secondary-color-rgb), 0.08); /* Fondo azul claro al pasar el ratón */
     color: var(--secondary-color); /* El texto de la opción se vuelve azul al pasar el ratón */
 }
 
-/* Estilo para el círculo del radio button (no siempre fácil de customizar con Streamlit directamente) */
+/* Estilo para el círculo del radio button */
 .stRadio [data-testid="stFormSubmitButton"] + div > label > div:first-child,
 .stRadio div[role="radiogroup"] label > div:first-child {
-    border-color: var(--secondary-color); /* Borde del círculo azul */
+    border: 2px solid var(--secondary-light); /* Borde del círculo azul claro */
+    width: 20px; /* Tamaño del círculo */
+    height: 20px;
+    min-width: 20px; /* Asegurar tamaño mínimo */
+    min-height: 20px;
+    margin-right: 12px; /* Espacio entre el círculo y el texto */
+    border-radius: 50%; /* Hacerlo circular */
+    display: flex; /* Para centrar el punto interior */
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease-in-out;
 }
 
+/* Punto interior del radio button seleccionado */
 .stRadio div[role="radiogroup"] label > div:first-child > div {
     background-color: var(--primary-color); /* Color del círculo seleccionado (verde) */
+    width: 12px; /* Tamaño del punto interior */
+    height: 12px;
+    border-radius: 50%;
+    opacity: 0; /* Oculto por defecto */
+    transform: scale(0.5); /* Más pequeño por defecto */
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 
 /* Estilo para cuando una opción de radio está seleccionada */
-.stRadio div[role="radiogroup"] label[data-baseweb="radio"] > div > div:first-child {
+.stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] > div > div:first-child {
     border-color: var(--primary-color) !important; /* Borde del círculo verde cuando está seleccionado */
 }
-.stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] > div > div:first-child {
-    background-color: var(--primary-color) !important; /* Relleno del círculo verde cuando está seleccionado */
+.stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] > div > div:first-child > div {
+    opacity: 1; /* Mostrar el punto interior */
+    transform: scale(1); /* Escalar al tamaño normal */
+    background-color: var(--primary-color) !important; /* Asegurar color */
 }
 .stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] {
     color: var(--primary-color); /* Color del texto de la opción seleccionada (verde) */
-    font-weight: bold; /* Texto en negrita para la opción seleccionada */
+    font-weight: 500; /* Un poco más de negrita para la seleccionada */
+    background-color: rgba(var(--primary-color-rgb), 0.05); /* Fondo muy suave para la opción seleccionada */
 }
 
 
 /* Estilos para Selectbox (selectores de tema/nivel) */
 .stSelectbox > label {
-    font-size: 1.1em;
-    font-weight: bold;
+    font-size: 1.15em;
+    font-weight: 600;
     color: var(--header-color); /* Usamos el color de los títulos para la etiqueta */
-    margin-bottom: 10px; /* Un poco de espacio debajo de la etiqueta */
+    margin-bottom: 12px; /* Un poco más de espacio debajo de la etiqueta */
+    display: block;
 }
 
 /* Estilo del contenedor del Selectbox */
 .stSelectbox div[data-baseweb="select"] {
-    border-radius: 12px; /* Más redondeado */
-    border: 2px solid var(--secondary-color); /* Borde azul más grueso */
+    border-radius: 8px; /* Más redondeado */
+    border: 1px solid #ced4da; /* Borde gris suave por defecto */
     background-color: white; /* Fondo blanco para el dropdown */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Sombra suave */
     transition: all 0.3s ease-in-out;
 }
 
 /* Efecto al pasar el ratón o al enfocar (click) */
-.stSelectbox div[data-baseweb="select"]:hover,
+.stSelectbox div[data-baseweb="select"]:hover {
+    border-color: var(--secondary-color); /* Borde azul al pasar el ratón */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+}
 .stSelectbox div[data-baseweb="select"]:focus-within {
-    border-color: var(--primary-color); /* Borde verde al interactuar */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+    border-color: var(--primary-color); /* Borde verde al enfocar (activo) */
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25); /* Anillo de enfoque suave */
 }
 
 /* Estilo del texto dentro del Selectbox */
 .stSelectbox div[data-baseweb="select"] span[data-baseweb="typo"] {
     color: var(--text-color); /* Color del texto de la opción seleccionada */
     font-weight: 500;
+    padding: 10px 15px; /* Más padding para el texto dentro del selectbox */
 }
 
 /* Estilo de las opciones en el menú desplegable */
 .stSelectbox div[data-baseweb="popover"] div[role="listbox"] {
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra para el menú desplegable */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada para el menú desplegable */
+    padding: 5px 0; /* Padding interno para las opciones */
 }
 .stSelectbox div[data-baseweb="popover"] div[role="option"] {
     color: var(--text-color);
-    padding: 10px 15px;
-    transition: background-color 0.2s ease-in-out;
+    padding: 12px 20px; /* Más padding para las opciones */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    font-size: 1.05em;
 }
 .stSelectbox div[data-baseweb="popover"] div[role="option"]:hover {
-    background-color: rgba(var(--primary-color-rgb, 0, 0, 0), 0.1); /* Fondo verde claro al pasar el ratón */
+    background-color: rgba(var(--primary-color-rgb), 0.1); /* Fondo verde claro al pasar el ratón */
     color: var(--primary-color); /* Texto verde al pasar el ratón */
 }
-
+.stSelectbox div[data-baseweb="popover"] div[role="option"][aria-selected="true"] {
+    background-color: rgba(var(--primary-color-rgb), 0.15); /* Fondo un poco más oscuro para la opción seleccionada */
+    color: var(--primary-color);
+    font-weight: 600; /* Más negrita para la opción seleccionada */
+}
 
 /* Estilos para Text Area (respuesta del estudiante) */
 .stTextArea > label {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: var(--text-color);
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--header-color);
+    margin-bottom: 15px;
+    display: block;
 }
 .stTextArea div[data-baseweb="textarea"] textarea {
     border-radius: 8px;
-    border: 1px solid var(--secondary-color);
-    padding: 10px;
-    min-height: 100px; /* Altura mínima */
+    border: 1px solid #ced4da; /* Borde gris suave */
+    padding: 15px; /* Más padding interno */
+    min-height: 150px; /* Altura mínima más grande */
+    font-size: 1em;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: white;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Sombra interna sutil */
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.stTextArea div[data-baseweb="textarea"] textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
+    outline: none; /* Eliminar el contorno por defecto del navegador */
 }
 
 /* Estilos para alertas (información, éxito, error, advertencia) */
 .stAlert {
-    border-radius: 8px;
+    border-radius: 10px; /* Más redondeado */
     font-size: 1.05em;
-    padding: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px 25px; /* Más padding */
+    margin-bottom: 25px; /* Más margen inferior */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Sombra más definida */
+    line-height: 1.5;
+    font-weight: 500; /* Texto un poco más grueso */
 }
-.stAlert.st-cq { /* Info */
+/* Reemplazar selectores genéricos con los específicos de Streamlit */
+/* Info */
+div[data-testid="stAlert"] > div[data-baseweb="popover"] > div[data-baseweb="toast"] {
     background-color: rgba(var(--info-color), 0.1);
     color: var(--info-color);
     border-left: 5px solid var(--info-color);
 }
-.stAlert.st-cr { /* Success */
+/* Success */
+div[data-testid="stAlert"].st-cq { /* Este es un ejemplo. Debes verificar el data-testid correcto para 'success' */
     background-color: rgba(var(--success-color), 0.1);
     color: var(--success-color);
     border-left: 5px solid var(--success-color);
 }
-.stAlert.st-cl { /* Warning */
-    background-color: rgba(var(--accent-color), 0.1);
-    color: var(--accent-color);
-    border-left: 5px solid var(--accent-color);
+/* Warning */
+div[data-testid="stAlert"].st-cl { /* Este es un ejemplo. Debes verificar el data-testid correcto para 'warning' */
+    background-color: rgba(var(--warning-color), 0.1);
+    color: var(--warning-color);
+    border-left: 5px solid var(--warning-color);
 }
-.stAlert.st-cm { /* Error */
+/* Error */
+div[data-testid="stAlert"].st-cm { /* Este es un ejemplo. Debes verificar el data-testid correcto para 'error' */
     background-color: rgba(var(--error-color), 0.1);
     color: var(--error-color);
     border-left: 5px solid var(--error-color);
 }
+/* Para Streamlit más recientes, los data-testid pueden ser más simples, como: */
+.stAlert [data-baseweb="toast"] {
+    /* Estilos base para todas las alertas */
+    background-color: rgba(200, 200, 200, 0.1); /* Fallback */
+    color: #333; /* Fallback */
+    border-left: 5px solid #ccc; /* Fallback */
+}
+.stAlert [data-baseweb="toast"][type="info"] {
+    background-color: rgba(var(--info-color-rgb), 0.1);
+    color: var(--info-color);
+    border-left-color: var(--info-color);
+}
+.stAlert [data-baseweb="toast"][type="success"] {
+    background-color: rgba(var(--success-color-rgb), 0.1);
+    color: var(--success-color);
+    border-left-color: var(--success-color);
+}
+.stAlert [data-baseweb="toast"][type="warning"] {
+    background-color: rgba(var(--warning-color-rgb), 0.1);
+    color: var(--warning-color);
+    border-left-color: var(--warning-color);
+}
+.stAlert [data-baseweb="toast"][type="error"] {
+    background-color: rgba(var(--error-color-rgb), 0.1);
+    color: var(--error-color);
+    border-left-color: var(--error-color);
+}
+
 
 /* Líneas divisorias */
 hr {
-    border-top: 2px solid var(--secondary-color); /* Más visible */
-    margin: 20px 0;
+    border: none; /* Eliminar el borde por defecto */
+    border-top: 1px solid rgba(var(--text-color-rgb), 0.1); /* Línea más fina y suave */
+    margin: 30px 0; /* Más margen */
 }
 
 /* Estilos para el texto de marcado (Markdown) */
 p {
-    line-height: 1.6; /* Espaciado entre líneas */
+    line-height: 1.7; /* Mayor espaciado entre líneas para mejor legibilidad */
+    margin-bottom: 1em; /* Margen inferior para los párrafos */
+    font-size: 1.05em; /* Ligeramente más grande */
 }
 
 strong {
     color: var(--header-color); /* Negritas en el texto con un color distinto */
+    font-weight: 600; /* Asegurar que la negrita sea clara */
+}
+
+/* Listas (ul, ol) */
+ul, ol {
+    margin-bottom: 1em;
+    padding-left: 25px; /* Indentación para las listas */
+}
+li {
+    margin-bottom: 0.5em; /* Espacio entre ítems de lista */
+    line-height: 1.6;
+}
+
+/* Enlaces dentro del markdown */
+a {
+    color: var(--secondary-color); /* Enlaces en color azul */
+    text-decoration: none; /* Sin subrayado por defecto */
+    transition: color 0.2s ease-in-out, text-decoration 0.2s ease-in-out;
+}
+a:hover {
+    color: var(--primary-color); /* Cambiar a verde al pasar el ratón */
+    text-decoration: underline; /* Subrayar al pasar el ratón */
 }
 
 /* Mejoras para las barras de progreso si las usas */
 .stProgress > div > div > div > div {
     background-color: var(--primary-color);
+    border-radius: 5px; /* Bordes redondeados para la barra de progreso */
+}
+.stProgress > div > div > div {
+    background-color: rgba(var(--primary-color-rgb), 0.1); /* Fondo suave para la barra */
+    border-radius: 5px;
+}
+
+/* Estilos para las pestañas (Tabs) */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 15px; /* Espacio entre pestañas */
+    justify-content: center; /* Centrar las pestañas */
+    margin-bottom: 30px; /* Espacio debajo de las pestañas */
+    border-bottom: 2px solid #e0e0e0; /* Línea suave debajo de todas las pestañas */
+}
+
+.stTabs [data-baseweb="tab"] {
+    background-color: transparent; /* Fondo transparente por defecto */
+    color: var(--text-color); /* Color de texto para pestañas inactivas */
+    font-size: 1.15em; /* Tamaño de fuente de las pestañas */
+    font-weight: 500;
+    padding: 12px 25px; /* Padding de las pestañas */
+    border-radius: 8px 8px 0 0; /* Bordes superiores redondeados */
+    transition: all 0.3s ease-in-out;
+    border: none; /* Eliminar bordes por defecto */
+    outline: none; /* Eliminar contorno al enfocar */
+    position: relative; /* Para el indicador inferior */
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--secondary-color); /* Azul al pasar el ratón */
+    background-color: rgba(var(--secondary-color-rgb), 0.05); /* Fondo muy ligero */
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    color: var(--primary-color); /* Verde para la pestaña activa */
+    font-weight: 700; /* Más negrita para la activa */
+    background-color: white; /* Fondo blanco para la pestaña activa */
+    border-bottom: 3px solid var(--primary-color); /* Línea inferior verde más gruesa */
+    z-index: 1; /* Para que la línea inferior de la activa se vea sobre la de la lista */
+}
+
+/* Ajuste para el contenido de las pestañas para que respire más */
+.stTabs [data-baseweb="tab-panel"] {
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+
+/* Estilos para imágenes incrustadas */
+.stImage > img {
+    border-radius: 10px; /* Bordes redondeados para imágenes */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra suave para imágenes */
+    display: block; /* Para centrar imágenes si es necesario con margin: auto */
+    margin: 20px auto; /* Centrar y dar espacio */
+    max-width: 100%; /* Asegurar que no se desborden */
+    height: auto;
+}
+
+/* Estilos para videos incrustados */
+.stVideo {
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 100%;
+}
+.stVideo > video {
+    border-radius: 10px; /* Asegurar que el video mismo tenga bordes redondeados */
+}
+
+/* Contenedores de columnas */
+.st-emotion-cache-nahz7x { /* Este selector puede variar, es el que agrupa las columnas */
+    gap: 30px; /* Mayor espacio entre columnas */
+}
+
+/* Footer personalizado (si lo añades con st.markdown) */
+.footer {
+    text-align: center;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+/* Pequeñas animaciones para elementos clave al cargar */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.stApp {
+    animation: fadeIn 0.8s ease-out; /* Animación general al cargar la app */
+}
+
+/* Opcional: Estilo para iconos/emojis, si los usas frecuentemente */
+.emoji {
+    margin-right: 5px;
+}
+
+/* Ajustes responsivos básicos para pantallas más pequeñas */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding: 20px 25px; /* Menos padding en pantallas pequeñas */
+    }
+    h1 {
+        font-size: 2.2em; /* Títulos más pequeños */
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+    .stButton > button {
+        font-size: 1em;
+        padding: 10px 20px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-size: 1em;
+        padding: 10px 15px;
+    }
 }
