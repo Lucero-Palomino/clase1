@@ -1,470 +1,52 @@
-/* Importar fuentes de Google Fonts al inicio del archivo */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap');
-
-/* Colores base para la aplicación - Ajustados para una paleta más armoniosa y moderna */
-:root {
-    --primary-color: #28a745; /* Verde más profundo y profesional (similar a un verde esmeralda) */
-    --primary-light: #5cb85c; /* Versión más clara del primario para hover o fondos sutiles */
-    --secondary-color: #007bff; /* Azul vibrante, un estándar para enlaces y énfasis */
-    --secondary-light: #66afe9; /* Azul más claro para algunos detalles */
-    --background-color: #f8f9fa; /* Fondo blanco roto, muy suave y limpio */
-    --text-color: #343a40; /* Gris oscuro para el texto principal, muy legible */
-    --header-color: #212529; /* Negro muy oscuro o gris muy oscuro para los títulos */
-    --accent-color: #ffc107; /* Amarillo/naranja para advertencias o resaltados (se mantiene) */
-    --success-color: #28a745; /* Verde para mensajes de éxito (coincide con primary) */
-    --error-color: #dc3545; /* Rojo más suave para mensajes de error */
-    --info-color: #17a2b8; /* Azul teal para mensajes de información */
-    --warning-color: #ffc107; /* Naranja para advertencias */
-
-    /* RGB para uso en rgba() si es necesario, basados en los colores ajustados */
-    --primary-color-rgb: 40, 167, 69;
-    --secondary-color-rgb: 0, 123, 255;
-    --text-color-rgb: 52, 58, 64;
-}
-
-/* Estilos generales del cuerpo de la aplicación */
-#root > div:nth-child(1) > div > div > div.stApp {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    font-family: 'Roboto', sans-serif;
-    padding: 0;
-    margin: 0;
-}
-
-/* Contenedor principal del contenido de Streamlit */
-.stApp > header {
-    background-color: white;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-/* Contenedor principal del contenido, donde se aplica el estilo de 'card' */
-.main .block-container {
-    padding: 40px 60px;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
-
-
-/* Título principal de la aplicación */
-h1 {
-    color: var(--header-color);
+/* Estilos para los botones de acción principales (los "cuadros grandes") */
+/* Este selector apunta a los botones generados con use_container_width=True */
+/* Puede que necesites ajustar el selector si tu Streamlit versión tiene uno diferente */
+div[data-testid="stColumn"] > div > .stButton > button {
+    background-color: var(--primary-light); /* Un verde más claro para distinguirlos */
+    color: var(--header-color); /* Texto oscuro para contraste */
+    border: 2px solid var(--primary-color); /* Borde con el color primario */
+    border-radius: 15px; /* Más redondeado */
+    padding: 30px 20px; /* Mucho más padding para hacerlos grandes */
+    font-size: 1.3em; /* Letra más grande */
+    font-weight: 700; /* Más negrita */
+    height: 150px; /* Altura fija para uniformidad (ajusta si lo necesitas) */
+    display: flex; /* Para centrar el contenido verticalmente */
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    font-family: 'Montserrat', sans-serif;
-    margin-bottom: 40px;
-    font-size: 3em;
-    font-weight: 700;
-    text-shadow: 1px 2px 4px rgba(0,0,0,0.15);
-    line-height: 1.2;
-    padding-top: 20px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+    transition: all 0.3s ease-in-out;
 }
 
-/* Subtítulos */
-h2, h3 {
-    color: var(--secondary-color);
-    border-bottom: 2px solid rgba(var(--secondary-color-rgb), 0.3);
-    padding-bottom: 8px;
-    margin-top: 40px;
-    margin-bottom: 20px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 1.8em;
+div[data-testid="stColumn"] > div > .stButton > button:hover {
+    background-color: var(--primary-color); /* Se oscurece al pasar el ratón */
+    color: white; /* Texto blanco al pasar el ratón */
+    transform: translateY(-5px); /* Efecto 3D al pasar el ratón */
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2); /* Sombra más intensa */
 }
 
-h3 {
-    font-size: 1.4em;
-    color: var(--text-color);
-    border-bottom: 1px solid rgba(var(--text-color-rgb), 0.1);
-}
-
-
-/* Estilos de los botones */
-.stButton > button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 14px 30px;
-    font-size: 1.15em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    letter-spacing: 0.5px;
-}
-.stButton > button:hover {
-    background-color: var(--primary-light);
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-}
-.stButton > button:active {
+div[data-testid="stColumn"] > div > .stButton > button:active {
     transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Estilos para radios (opciones de examen y acción principal) */
-.stRadio > label {
-    font-weight: 600;
-    color: var(--header-color);
-    font-size: 1.2em;
-    margin-bottom: 20px;
-    display: block;
-}
-
-/* Contenedor de las opciones de radio */
-.stRadio div[role="radiogroup"] {
-    background-color: #ffffff;
-    border-radius: 10px;
-    padding: 15px 25px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-/* Estilo general para las opciones individuales de los radio buttons */
-.stRadio div[role="radiogroup"] label {
-    padding: 12px 10px;
-    margin: 5px 0;
-    border-radius: 8px;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    color: var(--text-color);
-    font-size: 1.05em;
-    font-weight: 400;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-/* Estilo al pasar el ratón sobre una opción de radio */
-.stRadio div[role="radiogroup"] label:hover {
-    background-color: rgba(var(--secondary-color-rgb), 0.08);
-    color: var(--secondary-color);
-}
-
-/* Estilo para el círculo del radio button */
-.stRadio [data-testid="stFormSubmitButton"] + div > label > div:first-child,
-.stRadio div[role="radiogroup"] label > div:first-child {
-    border: 2px solid var(--secondary-light);
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
-    margin-right: 12px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.2s ease-in-out;
-}
-
-/* Punto interior del radio button seleccionado */
-.stRadio div[role="radiogroup"] label > div:first-child > div {
-    background-color: var(--primary-color);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    opacity: 0;
-    transform: scale(0.5);
-    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-}
-
-/* Estilo para cuando una opción de radio está seleccionada */
-.stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] > div > div:first-child {
-    border-color: var(--primary-color) !important;
-}
-.stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] > div > div:first-child > div {
-    opacity: 1;
-    transform: scale(1);
-    background-color: var(--primary-color) !important;
-}
-.stRadio div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] {
-    color: var(--primary-color);
-    font-weight: 500;
-    background-color: rgba(var(--primary-color-rgb), 0.05);
-}
-
-
-/* Estilos para Selectbox (selectores de tema/nivel) */
-.stSelectbox > label {
-    font-size: 1.15em;
-    font-weight: 600;
-    color: var(--header-color);
-    margin-bottom: 12px;
-    display: block;
-}
-
-/* Estilo del contenedor del Selectbox */
-.stSelectbox div[data-baseweb="select"] {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    background-color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease-in-out;
-}
-
-/* Efecto al pasar el ratón o al enfocar (click) */
-.stSelectbox div[data-baseweb="select"]:hover {
-    border-color: var(--secondary-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.stSelectbox div[data-baseweb="select"]:focus-within {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
-    outline: none;
-}
-
-/* Estilo del texto dentro del Selectbox */
-.stSelectbox div[data-baseweb="select"] span[data-baseweb="typo"] {
-    color: var(--text-color);
-    font-weight: 500;
-    padding: 10px 15px;
-}
-
-/* Estilo de las opciones en el menú desplegable */
-.stSelectbox div[data-baseweb="popover"] div[role="listbox"] {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    padding: 5px 0;
-}
-.stSelectbox div[data-baseweb="popover"] div[role="option"] {
-    color: var(--text-color);
-    padding: 12px 20px;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    font-size: 1.05em;
-}
-.stSelectbox div[data-baseweb="popover"] div[role="option"]:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-    color: var(--primary-color);
-}
-.stSelectbox div[data-baseweb="popover"] div[role="option"][aria-selected="true"] {
-    background-color: rgba(var(--primary-color-rgb), 0.15);
-    color: var(--primary-color);
-    font-weight: 600;
-}
-
-/* Estilos para Text Area (respuesta del estudiante) */
-.stTextArea > label {
-    font-size: 1.15em;
-    font-weight: 600;
-    color: var(--header-color);
-    margin-bottom: 15px;
-    display: block;
-}
-.stTextArea div[data-baseweb="textarea"] textarea {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    padding: 15px;
-    min-height: 150px;
-    font-size: 1em;
-    line-height: 1.6;
-    color: var(--text-color);
-    background-color: white;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.stTextArea div[data-baseweb="textarea"] textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
-    outline: none;
-}
-
-/* Estilos para alertas (información, éxito, error, advertencia) */
-.stAlert {
-    border-radius: 10px;
-    font-size: 1.05em;
-    padding: 20px 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    line-height: 1.5;
-    font-weight: 500;
-}
-/* Estilos para los diferentes tipos de alertas */
-.stAlert [data-baseweb="toast"][type="info"] {
-    background-color: rgba(var(--info-color-rgb), 0.1);
-    color: var(--info-color);
-    border-left-color: var(--info-color);
-}
-.stAlert [data-baseweb="toast"][type="success"] {
-    background-color: rgba(var(--success-color-rgb), 0.1);
-    color: var(--success-color);
-    border-left-color: var(--success-color);
-}
-.stAlert [data-baseweb="toast"][type="warning"] {
-    background-color: rgba(var(--warning-color-rgb), 0.1);
-    color: var(--warning-color);
-    border-left-color: var(--warning-color);
-}
-.stAlert [data-baseweb="toast"][type="error"] {
-    background-color: rgba(var(--error-color-rgb), 0.1);
-    color: var(--error-color);
-    border-left-color: var(--error-color);
-}
-
-/* Líneas divisorias */
-hr {
-    border: none;
-    border-top: 1px solid rgba(var(--text-color-rgb), 0.1);
-    margin: 30px 0;
-}
-
-/* Estilos para el texto de marcado (Markdown) */
-p {
-    line-height: 1.7;
-    margin-bottom: 1em;
-    font-size: 1.05em;
-}
-
-strong {
-    color: var(--header-color);
-    font-weight: 600;
-}
-
-/* Listas (ul, ol) */
-ul, ol {
-    margin-bottom: 1em;
-    padding-left: 25px;
-}
-li {
-    margin-bottom: 0.5em;
-    line-height: 1.6;
-}
-
-/* Enlaces dentro del markdown */
-a {
-    color: var(--secondary-color);
-    text-decoration: none;
-    transition: color 0.2s ease-in-out, text-decoration 0.2s ease-in-out;
-}
-a:hover {
-    color: var(--primary-color);
-    text-decoration: underline;
-}
-
-/* Mejoras para las barras de progreso */
-.stProgress > div > div > div > div {
-    background-color: var(--primary-color);
-    border-radius: 5px;
-    transition: width 0.5s ease-out; /* Animación para el cambio de progreso */
-}
-.stProgress > div > div > div {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-    border-radius: 5px;
-    height: 12px; /* Un poco más alta que la de Duolingo para visibilidad */
-}
-
-
-/* Estilos para las pestañas (Tabs) */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #e0e0e0;
-}
-
-.stTabs [data-baseweb="tab"] {
-    background-color: transparent;
-    color: var(--text-color);
-    font-size: 1.15em;
-    font-weight: 500;
-    padding: 12px 25px;
-    border-radius: 8px 8px 0 0;
-    transition: all 0.3s ease-in-out;
-    border: none;
-    outline: none;
-    position: relative;
-}
-
-.stTabs [data-baseweb="tab"]:hover {
-    color: var(--secondary-color);
-    background-color: rgba(var(--secondary-color-rgb), 0.05);
-}
-
-.stTabs [data-baseweb="tab"][aria-selected="true"] {
-    color: var(--primary-color);
-    font-weight: 700;
-    background-color: white;
-    border-bottom: 3px solid var(--primary-color);
-    z-index: 1;
-}
-
-/* Ajuste para el contenido de las pestañas para que respire más */
-.stTabs [data-baseweb="tab-panel"] {
-    padding-top: 25px;
-    padding-bottom: 25px;
-}
-
-/* Estilos para imágenes incrustadas */
-.stImage > img {
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    display: block;
-    margin: 20px auto;
-    max-width: 100%;
-    height: auto;
-    /* Aseguramos que las imágenes de la corrección tengan un tamaño razonable, por ejemplo: */
-    width: 60%; /* Ajusta este valor si quieres que sean más grandes o más pequeñas */
-    min-width: 250px; /* Tamaño mínimo para que no sean invisibles en móviles */
-}
-
-/* Estilos para videos incrustados */
-.stVideo {
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    margin: 20px auto;
-    max-width: 100%;
-}
-.stVideo > video {
-    border-radius: 10px;
-}
-
-/* Contenedores de columnas */
-.st-emotion-cache-nahz7x { /* Este selector puede variar, es el que agrupa las columnas */
-    gap: 30px;
-}
-
-/* Footer personalizado (si lo añades con st.markdown) */
-.footer {
-    text-align: center;
-    margin-top: 50px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(0,0,0,0.05);
-    color: #6c757d;
-    font-size: 0.9em;
-}
-
-/* Pequeñas animaciones para elementos clave al cargar */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.stApp {
-    animation: fadeIn 0.8s ease-out;
-}
-
-/* Ajustes responsivos básicos para pantallas más pequeñas */
+/* Ajustes para el tamaño de fuente en móviles */
 @media (max-width: 768px) {
-    .main .block-container {
-        padding: 20px 25px;
-    }
-    h1 {
-        font-size: 2.2em;
-    }
-    h2 {
-        font-size: 1.5em;
-    }
-    .stButton > button {
-        font-size: 1em;
-        padding: 10px 20px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-size: 1em;
-        padding: 10px 15px;
-    }
-    /* Reducir el tamaño máximo de las imágenes en móviles */
-    .stImage > img {
-        width: 80%;
+    div[data-testid="stColumn"] > div > .stButton > button {
+        padding: 20px 15px; /* Menos padding en móviles */
+        font-size: 1.1em;
+        height: 120px; /* Altura ajustada para móviles */
     }
 }
+
+/* Opcional: Si quieres un efecto de "seleccionado" para el botón activo */
+/* Esto requiere añadir una clase dinámica al botón en Python, que es más complejo
+   pero si te interesa, podemos explorarlo. Por ahora, el hover da buen feedback. */
+/*
+div[data-testid="stColumn"] > div > .stButton > button.active-option {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--secondary-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25) !important;
+}
+*/
