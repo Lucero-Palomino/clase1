@@ -521,7 +521,7 @@ def main():
                             st.session_state['exam_finished'] = True
                             st.session_state['exam_active_session'] = False
                         else:
-                            st.experimental_rerun()
+                            st.rerun()
                     else:
                         st.warning("Por favor, selecciona una opción antes de comprobar.")
             else:
@@ -572,7 +572,7 @@ def main():
                 for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                     if key in st.session_state:
                         del st.session_state[key]
-                st.experimental_rerun()
+                st.rerun()
 
 # --- Punto de Entrada de la Aplicación ---
 if __name__ == "__main__":
