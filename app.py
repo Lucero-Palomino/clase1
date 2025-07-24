@@ -3,7 +3,7 @@ import google.generativeai as genai
 import os
 import random
 import re
-# import time # Para simular un pequeño delay si es necesario
+import time # Importar time para la marca de tiempo del PDF
 
 # --- Importaciones para PDF ---
 from reportlab.lib.pagesizes import letter
@@ -20,7 +20,7 @@ import base64
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
-# --- Funciones Core del Chatbot (Mantén estas funciones tal cual las tienes en tu código) ---
+# --- Funciones Core del Chatbot ---
 
 def explicar_concepto(tema):
     """Genera una explicación detallada de un concepto de red."""
@@ -138,7 +138,7 @@ def parse_multiple_choice_question(raw_data):
     }
 
 
-# --- NUEVA FUNCIÓN PARA GENERAR PDF ---
+# --- FUNCIÓN PARA GENERAR PDF ---
 def generate_exam_pdf(score, total_questions, user_answers, all_questions):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
@@ -179,10 +179,6 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions):
         question_info = all_questions[user_ans['question_index']]
         story.append(Paragraph(f"--- Pregunta {i + 1} ---", styles['HeaderStyle']))
         story.append(Paragraph(f"**Pregunta:** {question_info['question']}", styles['NormalStyle']))
-
-        # Mostrar las opciones (puedes omitirlas si el PDF es solo para revisión de errores)
-        # for opt in question_info['options']:
-        #     story.append(Paragraph(opt, styles['NormalStyle']))
 
         story.append(Paragraph(f"Tu respuesta: **{user_ans['user_choice_char']}**", styles['NormalStyle']))
         story.append(Paragraph(f"Respuesta correcta: **{user_ans['correct_char']}**", styles['NormalStyle']))
@@ -265,32 +261,35 @@ def main():
         if st.button("Explicar un concepto", key="btn_explicar_concepto", use_container_width=True):
             st.session_state['current_activity'] = 'explicar'
             # Resetear estado del examen si se cambia de actividad
-            st.session_state['exam_started'] = False
-            st.session_state['exam_active_session'] = False
-            st.session_state['exam_finished'] = False
+            # Se resetean todas las claves explícitamente para evitar KeyError
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                if key in st.session_state:
+                    del st.session_state[key]
     with col2:
         if st.button("Proponer un ejercicio", key="btn_proponer_ejercicio", use_container_width=True):
             st.session_state['current_activity'] = 'proponer'
             # Resetear estado del examen si se cambia de actividad
-            st.session_state['exam_started'] = False
-            st.session_state['exam_active_session'] = False
-            st.session_state['exam_finished'] = False
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                if key in st.session_state:
+                    del st.session_state[key]
     with col3:
         if st.button("Evaluar mi respuesta al ejercicio", key="btn_evaluar_respuesta", use_container_width=True):
             st.session_state['current_activity'] = 'evaluar'
             # Resetear estado del examen si se cambia de actividad
-            st.session_state['exam_started'] = False
-            st.session_state['exam_active_session'] = False
-            st.session_state['exam_finished'] = False
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                if key in st.session_state:
+                    del st.session_state[key]
     with col4:
         if st.button("Tomar examen", key="btn_tomar_examen", use_container_width=True):
             st.session_state['current_activity'] = 'examen'
-            # Si el examen se va a iniciar o reiniciar, limpiar resultados previos
-            if not st.session_state.get('exam_started', False) or st.session_state.get('exam_finished', False):
-                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.session_state['exam_started'] = False # Asegurar que no se inicie automáticamente
+            # Siempre se reinicia el estado del examen al hacer clic en "Tomar examen"
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                if key in st.session_state:
+                    del st.session_state[key]
+            # Asegurar que 'exam_started' y 'exam_active_session' se inicien en False para que el botón "Comenzar Examen Ahora" aparezca
+            st.session_state['exam_started'] = False
+            st.session_state['exam_active_session'] = False
+
 
     st.markdown("---") # Separador después de los botones principales
 
@@ -397,17 +396,27 @@ def main():
         st.header("Examen de Arquitectura de Redes :book:")
         st.markdown("¿Listo para un desafío? Responde 10 preguntas de opción múltiple. ¡Buena suerte!")
 
-        # Inicialización del estado del examen
+        # --- INICIALIZACIÓN ROBUSTA DEL ESTADO DEL EXAMEN ---
+        # Asegurarse de que todas las claves existan antes de usarlas
         if 'exam_started' not in st.session_state:
             st.session_state['exam_started'] = False
+        if 'current_question_index' not in st.session_state:
             st.session_state['current_question_index'] = 0
+        if 'score' not in st.session_state:
             st.session_state['score'] = 0
+        if 'questions' not in st.session_state:
             st.session_state['questions'] = []
+        if 'user_answers' not in st.session_state:
             st.session_state['user_answers'] = []
+        if 'exam_finished' not in st.session_state:
             st.session_state['exam_finished'] = False
+        if 'exam_active_session' not in st.session_state:
             st.session_state['exam_active_session'] = False
+        if 'current_progress' not in st.session_state:
             st.session_state['current_progress'] = 0.0
+        if 'total_questions' not in st.session_state:
             st.session_state['total_questions'] = 10
+        # --- FIN INICIALIZACIÓN ROBUSTA ---
 
         if not st.session_state['exam_started']:
             if st.button("Comenzar Examen Ahora :rocket:", key="start_exam_button"):
