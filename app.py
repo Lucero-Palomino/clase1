@@ -3,7 +3,7 @@ import google.generativeai as genai
 import os
 import random
 import re
-import time # Importar time para la marca de tiempo del PDF
+import time
 
 # --- Importaciones para PDF ---
 from reportlab.lib.pagesizes import letter
@@ -134,12 +134,13 @@ def parse_multiple_choice_question(raw_data):
         'question': question_text,
         'options': new_options_display,
         'correct_answer_char': new_correct_char,
-        'explanation': explanation
+        'explanation': explanation,
+        'original_correct_option_text': next((opt[3:].strip() for opt in options_raw if opt.startswith(correct_answer_char + ')')), "")
     }
 
 
 # --- FUNCIÓN PARA GENERAR PDF ---
-def generate_exam_pdf(score, total_questions, user_answers, all_questions):
+def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_name="Estudiante"):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
                             rightMargin=inch, leftMargin=inch,
@@ -155,6 +156,8 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions):
                                alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
     styles.add(ParagraphStyle(name='NormalStyle', fontSize=12, leading=14,
                                alignment=TA_LEFT, spaceAfter=8))
+    styles.add(ParagraphStyle(name='OptionStyle', fontSize=11, leading=13,
+                               alignment=TA_LEFT, spaceAfter=4, leftIndent=20)) # Indentación para las opciones
     styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=12, leading=14,
                                alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold'))
     styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=12, leading=14,
@@ -165,8 +168,9 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions):
 
     story = []
 
-    # Título
+    # Título y nombre del estudiante
     story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
+    story.append(Paragraph(f"Estudiante: {user_name}", styles['SubTitleStyle']))
     story.append(Paragraph(f"Fecha: {time.strftime('%Y-%m-%d %H:%M')}", styles['SubTitleStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
@@ -175,15 +179,33 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions):
     story.append(Spacer(1, 0.2 * inch))
 
     # Detalles de cada pregunta
-    for i, user_ans in enumerate(user_answers):
-        question_info = all_questions[user_ans['question_index']]
+    for i, user_ans_data in enumerate(user_answers):
+        question_info = all_questions[user_ans_data['question_index']]
         story.append(Paragraph(f"--- Pregunta {i + 1} ---", styles['HeaderStyle']))
         story.append(Paragraph(f"**Pregunta:** {question_info['question']}", styles['NormalStyle']))
+        story.append(Spacer(1, 0.1 * inch))
 
-        story.append(Paragraph(f"Tu respuesta: **{user_ans['user_choice_char']}**", styles['NormalStyle']))
-        story.append(Paragraph(f"Respuesta correcta: **{user_ans['correct_char']}**", styles['NormalStyle']))
+        # Mostrar todas las opciones de la pregunta
+        story.append(Paragraph("Opciones:", styles['NormalStyle']))
+        for option_text in question_info['options']:
+            story.append(Paragraph(option_text, styles['OptionStyle']))
+        story.append(Spacer(1, 0.1 * inch))
 
-        if user_ans['user_choice_char'] == user_ans['correct_char']:
+
+        # Mostrar la respuesta del usuario de forma completa
+        story.append(Paragraph(f"Tu respuesta: **{user_ans_data['user_choice_full_text']}**", styles['NormalStyle']))
+
+        # Mostrar la respuesta correcta de forma completa
+        # Busca la opción completa correspondiente a la letra correcta
+        correct_option_full_text = ""
+        for option in question_info['options']:
+            if option.startswith(user_ans_data['correct_char'] + ')'):
+                correct_option_full_text = option
+                break
+        story.append(Paragraph(f"Respuesta correcta: **{correct_option_full_text}**", styles['NormalStyle']))
+
+
+        if user_ans_data['user_choice_char'] == user_ans_data['correct_char']:
             story.append(Paragraph("Estado: Correcto ✅", styles['CorrectAnswerStyle']))
         else:
             story.append(Paragraph("Estado: Incorrecto ❌", styles['IncorrectAnswerStyle']))
@@ -210,6 +232,13 @@ def main():
     st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios 🌐")
     st.markdown("---")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
+
+    # --- Campo para el nombre del usuario ---
+    if 'user_name' not in st.session_state:
+        st.session_state['user_name'] = ""
+
+    st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input")
+    # --- Fin campo nombre ---
 
     temas_principales = ["Redes LAN", "Protocolos de Red", "Modelos OSI/TCP-IP", "Seguridad de Red", "Dispositivos de Red", "Direccionamiento IP", "Enrutamiento", "Conmutación", "Subredes", "Capa Física"]
 
@@ -420,36 +449,53 @@ def main():
 
         if not st.session_state['exam_started']:
             if st.button("Comenzar Examen Ahora :rocket:", key="start_exam_button"):
-                st.session_state['exam_started'] = True
-                st.session_state['current_question_index'] = 0
-                st.session_state['score'] = 0
-                st.session_state['questions'] = []
-                st.session_state['user_answers'] = []
-                st.session_state['exam_finished'] = False
-                st.session_state['exam_active_session'] = True
-                st.session_state['current_progress'] = 0.0
-                st.session_state['total_questions'] = 10
+                if not st.session_state['user_name']:
+                    st.warning("¡Por favor, ingresa tu nombre antes de comenzar el examen!")
+                else:
+                    st.session_state['exam_started'] = True
+                    st.session_state['current_question_index'] = 0
+                    st.session_state['score'] = 0
+                    st.session_state['questions'] = []
+                    st.session_state['user_answers'] = []
+                    st.session_state['exam_finished'] = False
+                    st.session_state['exam_active_session'] = True
+                    st.session_state['current_progress'] = 0.0
+                    st.session_state['total_questions'] = 10
 
-                with st.spinner("Generando las 10 preguntas del examen..."):
-                    generated_themes = set()
-                    while len(st.session_state['questions']) < st.session_state['total_questions']:
-                        available_themes = [t for t in posibles_sub_temas_para_examen if t not in generated_themes]
-                        if not available_themes:
-                            st.warning("Se han utilizado todos los sub-temas posibles. Reutilizando temas para completar el examen.")
-                            available_themes = list(posibles_sub_temas_para_examen)
-                            generated_themes.clear()
+                    with st.spinner("Generando las 10 preguntas del examen..."):
+                        generated_themes = set()
+                        while len(st.session_state['questions']) < st.session_state['total_questions']:
+                            available_themes = [t for t in posibles_sub_temas_para_examen if t not in generated_themes]
+                            if not available_themes:
+                                st.warning("Se han utilizado todos los sub-temas posibles. Reutilizando temas para completar el examen.")
+                                available_themes = list(posibles_sub_temas_para_examen)
+                                generated_themes.clear()
 
-                        current_sub_tema = random.choice(available_themes)
-                        question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
-                        parsed_question = parse_multiple_choice_question(question_data_raw)
+                            current_sub_tema = random.choice(available_themes)
+                            try:
+                                question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
+                                parsed_question = parse_multiple_choice_question(question_data_raw)
 
-                        if parsed_question:
-                            st.session_state['questions'].append(parsed_question)
-                            generated_themes.add(current_sub_tema)
-                        else:
-                            st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
-                if len(st.session_state['questions']) == st.session_state['total_questions']:
-                     st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
+                                if parsed_question:
+                                    st.session_state['questions'].append(parsed_question)
+                                    generated_themes.add(current_sub_tema)
+                                else:
+                                    st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
+
+                                # --- Añadir un pequeño retraso aquí ---
+                                time.sleep(1.5) # Espera 1.5 segundos entre cada llamada a la API
+                                # Puedes ajustar este valor. Si el error persiste, auméntalo.
+
+                            except Exception as e:
+                                st.error(f"Error al generar pregunta para '{current_sub_tema}': {e}. Es posible que hayas excedido la cuota de la API. Por favor, inténtalo de nuevo en unos minutos o revisa tus cuotas en Google Cloud Console.")
+                                # Detener el proceso de generación de preguntas si hay un error de API
+                                st.session_state['exam_started'] = False
+                                st.session_state['exam_active_session'] = False
+                                st.session_state['exam_finished'] = False
+                                break # Salir del bucle while
+
+                    if len(st.session_state['questions']) == st.session_state['total_questions']:
+                         st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
 
         # Lógica para mostrar preguntas y manejar la navegación durante el examen
         if st.session_state.get('exam_active_session', False) and not st.session_state['exam_finished']:
@@ -481,12 +527,13 @@ def main():
 
                 if st.button("Comprobar :white_check_mark:", key=f"check_answer_button_{st.session_state['current_question_index']}"):
                     if selected_option_label:
-                        user_answer_char = selected_option_label[0]
+                        user_answer_char = selected_option_label[0] # Solo la letra (A, B, C, D)
 
-                        # Almacenar la respuesta del usuario para revisión posterior
+                        # Almacenar la respuesta del usuario para revisión posterior, incluyendo el texto completo
                         st.session_state['user_answers'].append({
                             'question_index': st.session_state['current_question_index'],
                             'user_choice_char': user_answer_char,
+                            'user_choice_full_text': selected_option_label, # Guardamos el texto completo aquí
                             'correct_char': current_question['correct_answer_char'],
                             'question_text': current_question['question'],
                             'explanation': current_question['explanation']
@@ -521,7 +568,7 @@ def main():
                             st.session_state['exam_finished'] = True
                             st.session_state['exam_active_session'] = False
                         else:
-                            st.rerun()
+                            st.rerun() # <-- CORREGIDO st.experimental_rerun()
                     else:
                         st.warning("Por favor, selecciona una opción antes de comprobar.")
             else:
@@ -531,18 +578,48 @@ def main():
         # Lógica para mostrar los resultados finales del examen
         if st.session_state['exam_finished']:
             st.balloons()
-            st.success(f"🎉 ¡Examen Terminado! Has respondido correctamente a **{st.session_state['score']}** de **{st.session_state['total_questions']}** preguntas. ¡Felicidades! 🎉")
+            st.success(f"🎉 ¡Examen Terminado! Has respondido correctamente a **{st.session_state['score']}** de **{st.session_state['total_questions']}** preguntas. ¡Felicidades, {st.session_state['user_name']}! 🎉")
             st.markdown("---")
             st.subheader("Resultados Detallados:")
 
             st.markdown(f"**Puntos obtenidos en este examen:** {st.session_state['score'] * 10} XP (por ejemplo)")
 
+            # Usar user_answers y questions para el PDF
+            pdf_user_name = st.session_state['user_name'] if st.session_state['user_name'] else "Estudiante"
+            pdf_buffer = generate_exam_pdf(
+                st.session_state['score'],
+                st.session_state['total_questions'],
+                st.session_state['user_answers'],
+                st.session_state['questions'],
+                user_name=pdf_user_name
+            )
+            st.download_button(
+                label="Descargar Resultados del Examen como PDF 📄",
+                data=pdf_buffer,
+                file_name=f"Resultados_Examen_Redes_{pdf_user_name.replace(' ', '_')}_{time.strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf",
+                key="download_pdf_button"
+            )
+
             for i, user_ans in enumerate(st.session_state['user_answers']):
                 question_info = st.session_state['questions'][user_ans['question_index']]
                 st.markdown(f"---")
                 st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}")
-                st.markdown(f"Tu respuesta: **{user_ans['user_choice_char']}**")
-                st.markdown(f"Respuesta correcta: **{user_ans['correct_char']}**")
+                
+                st.markdown("**Opciones:**")
+                for option_text in question_info['options']:
+                    st.markdown(f"- {option_text}")
+
+                st.markdown(f"Tu respuesta: **{user_ans['user_choice_full_text']}**")
+
+                # Obtener el texto completo de la respuesta correcta para mostrarlo en Streamlit
+                correct_option_full_text_display = ""
+                for option in question_info['options']:
+                    if option.startswith(user_ans['correct_char'] + ')'):
+                        correct_option_full_text_display = option
+                        break
+                st.markdown(f"Respuesta correcta: **{correct_option_full_text_display}**")
+
 
                 if user_ans['user_choice_char'] == user_ans['correct_char']:
                     st.success("✅ ¡Correcto!")
@@ -552,27 +629,11 @@ def main():
 
             st.markdown("---")
 
-            # --- Botón de descarga de PDF ---
-            pdf_buffer = generate_exam_pdf(
-                st.session_state['score'],
-                st.session_state['total_questions'],
-                st.session_state['user_answers'],
-                st.session_state['questions'] # Pasar todas las preguntas para tener los textos completos
-            )
-            st.download_button(
-                label="Descargar Resultados del Examen como PDF 📄",
-                data=pdf_buffer,
-                file_name=f"Resultados_Examen_Redes_{time.strftime('%Y%m%d_%H%M%S')}.pdf",
-                mime="application/pdf",
-                key="download_pdf_button"
-            )
-            # --- Fin Botón de descarga de PDF ---
-
             if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
                 for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                     if key in st.session_state:
                         del st.session_state[key]
-                st.rerun()
+                st.rerun() # <-- CORREGIDO st.experimental_rerun()
 
 # --- Punto de Entrada de la Aplicación ---
 if __name__ == "__main__":
