@@ -3,7 +3,18 @@ import google.generativeai as genai
 import os
 import random
 import re
-# import time # Para simular un pequeño delay si es necesario, si lo necesitas descomenta
+# import time # Para simular un pequeño delay si es necesario
+
+# --- Importaciones para PDF ---
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+import io
+import base64
+# --- Fin Importaciones para PDF ---
+
 
 # Configurar Gemini API Key
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
@@ -126,6 +137,70 @@ def parse_multiple_choice_question(raw_data):
         'explanation': explanation
     }
 
+
+# --- NUEVA FUNCIÓN PARA GENERAR PDF ---
+def generate_exam_pdf(score, total_questions, user_answers, all_questions):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=inch, leftMargin=inch,
+                            topMargin=inch, bottomMargin=inch)
+    styles = getSampleStyleSheet()
+
+    # Estilos personalizados para el PDF
+    styles.add(ParagraphStyle(name='TitleStyle', fontSize=24, leading=28,
+                               alignment=TA_CENTER, spaceAfter=20))
+    styles.add(ParagraphStyle(name='SubTitleStyle', fontSize=16, leading=20,
+                               alignment=TA_CENTER, spaceAfter=15))
+    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=14, leading=18,
+                               alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='NormalStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8))
+    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=11, leading=13,
+                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray'))
+
+
+    story = []
+
+    # Título
+    story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
+    story.append(Paragraph(f"Fecha: {time.strftime('%Y-%m-%d %H:%M')}", styles['SubTitleStyle']))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Resumen
+    story.append(Paragraph(f"Puntuación Final: {score} / {total_questions}", styles['HeaderStyle']))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Detalles de cada pregunta
+    for i, user_ans in enumerate(user_answers):
+        question_info = all_questions[user_ans['question_index']]
+        story.append(Paragraph(f"--- Pregunta {i + 1} ---", styles['HeaderStyle']))
+        story.append(Paragraph(f"**Pregunta:** {question_info['question']}", styles['NormalStyle']))
+
+        # Mostrar las opciones (puedes omitirlas si el PDF es solo para revisión de errores)
+        # for opt in question_info['options']:
+        #     story.append(Paragraph(opt, styles['NormalStyle']))
+
+        story.append(Paragraph(f"Tu respuesta: **{user_ans['user_choice_char']}**", styles['NormalStyle']))
+        story.append(Paragraph(f"Respuesta correcta: **{user_ans['correct_char']}**", styles['NormalStyle']))
+
+        if user_ans['user_choice_char'] == user_ans['correct_char']:
+            story.append(Paragraph("Estado: Correcto ✅", styles['CorrectAnswerStyle']))
+        else:
+            story.append(Paragraph("Estado: Incorrecto ❌", styles['IncorrectAnswerStyle']))
+            story.append(Paragraph(f"**Explicación:** {question_info['explanation']}", styles['ExplanationStyle']))
+
+        story.append(Spacer(1, 0.2 * inch))
+        if (i + 1) % 3 == 0 and (i + 1) != total_questions: # Añade un salto de página cada 3 preguntas
+             story.append(PageBreak())
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
 # --- Función Principal de Streamlit ---
 
 def main():
@@ -156,7 +231,7 @@ def main():
         "Protocolos de enrutamiento estático", "Protocolos de enrutamiento dinámico (RIP)",
         "Protocolos de enrutamiento dinámico (OSPF)", "Protocolos de enrutamiento dinámico (EIGRP)",
         "DNS (Domain Name System) funcionamiento", "DHCP (Dynamic Host Configuration Protocol) funcionamiento",
-        "ARP (Address Nddress Protocol) funcionamiento", "ICMP (Internet Control Message Protocol)",
+        "ARP (Address Resolution Protocol) funcionamiento", "ICMP (Internet Control Message Protocol)",
         "Protocolos de Capa de Aplicación (HTTP, HTTPS, FTP, SMTP, POP3, IMAP)",
         "Topología de Estrella", "Topología de Anillo", "Topología de Bus", "Topología de Malla",
         "Concepto de Dominio de Colisión", "Concepto de Dominio de Broadcast",
@@ -189,15 +264,33 @@ def main():
     with col1:
         if st.button("Explicar un concepto", key="btn_explicar_concepto", use_container_width=True):
             st.session_state['current_activity'] = 'explicar'
+            # Resetear estado del examen si se cambia de actividad
+            st.session_state['exam_started'] = False
+            st.session_state['exam_active_session'] = False
+            st.session_state['exam_finished'] = False
     with col2:
         if st.button("Proponer un ejercicio", key="btn_proponer_ejercicio", use_container_width=True):
             st.session_state['current_activity'] = 'proponer'
+            # Resetear estado del examen si se cambia de actividad
+            st.session_state['exam_started'] = False
+            st.session_state['exam_active_session'] = False
+            st.session_state['exam_finished'] = False
     with col3:
         if st.button("Evaluar mi respuesta al ejercicio", key="btn_evaluar_respuesta", use_container_width=True):
             st.session_state['current_activity'] = 'evaluar'
+            # Resetear estado del examen si se cambia de actividad
+            st.session_state['exam_started'] = False
+            st.session_state['exam_active_session'] = False
+            st.session_state['exam_finished'] = False
     with col4:
         if st.button("Tomar examen", key="btn_tomar_examen", use_container_width=True):
             st.session_state['current_activity'] = 'examen'
+            # Si el examen se va a iniciar o reiniciar, limpiar resultados previos
+            if not st.session_state.get('exam_started', False) or st.session_state.get('exam_finished', False):
+                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.session_state['exam_started'] = False # Asegurar que no se inicie automáticamente
 
     st.markdown("---") # Separador después de los botones principales
 
@@ -401,18 +494,14 @@ def main():
                             st.error(f"❌ Incorrecto. La respuesta correcta era **{current_question['correct_answer_char']}**.")
                             st.markdown(f"**Explicación:** {current_question['explanation']}")
 
-                            # Imágenes/videos para respuestas incorrectas (manteniendo la sugerencia anterior)
                             q_lower = current_question['question'].lower()
                             if "capa física" in q_lower or "codificación" in q_lower:
                                 st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Modem_diagram.svg/400px-Modem_diagram.svg.png",
                                          caption="Ejemplo de Codificación en Capa Física")
                                 st.markdown("_Este diagrama ilustra cómo se transforman los datos en señales físicas._")
                             elif "conmutación de paquetes" in q_lower:
-                                # Aquí puedes cambiar por una URL de video real si tienes una
                                 st.video("https://www.youtube.com/watch?v=yW6hI1F8K-0")
                                 st.markdown("_Video: ¿Cómo funciona la conmutación de paquetes?_")
-                            # ... (resto de tus condiciones para imágenes/videos)
-                            # time.sleep(1)
 
                         # Mover a la siguiente pregunta
                         st.session_state['current_question_index'] += 1
@@ -453,6 +542,23 @@ def main():
                     st.markdown(f"**Explicación:** {question_info['explanation']}")
 
             st.markdown("---")
+
+            # --- Botón de descarga de PDF ---
+            pdf_buffer = generate_exam_pdf(
+                st.session_state['score'],
+                st.session_state['total_questions'],
+                st.session_state['user_answers'],
+                st.session_state['questions'] # Pasar todas las preguntas para tener los textos completos
+            )
+            st.download_button(
+                label="Descargar Resultados del Examen como PDF 📄",
+                data=pdf_buffer,
+                file_name=f"Resultados_Examen_Redes_{time.strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf",
+                key="download_pdf_button"
+            )
+            # --- Fin Botón de descarga de PDF ---
+
             if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
                 for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                     if key in st.session_state:
