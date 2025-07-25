@@ -237,7 +237,7 @@ def main():
     except FileNotFoundError:
         st.error("Error: El archivo 'style.css' no se encontró. Asegúrate de que esté en la misma carpeta que 'app.py'.")
 
-    st.title("ARQUITECTURA DE REDES")
+    st.title("   ARQUITECTURA DE REDES    ")
     st.markdown("---")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
 
@@ -348,12 +348,12 @@ def main():
                 "Protocolos de Red": [
                     {"tipo": "Referencia", "titulo": "Definición", "url": "https://www.cloudflare.com/es-es/learning/network-layer/what-is-a-protocol/"},
                     {"tipo": "Referencia", "titulo": "(IBM)", "url": "https://www.ibm.com/docs/es/aix/7.2.0?topic=protocols-internet-network-level"},
-                    {"tipo": "video", "titulo": "Qué son los protocolos de red (YouTube)", "url": "https://www.youtube.com/watch?v=0n-rJ7W-47g"}
+                    {"tipo": "video", "titulo": "Qué son los protocolos de red", "url": "https://www.youtube.com/watch?v=hJqu97N_zhA&pp=ygURUHJvdG9jb2xvcyBkZSBSZWQ%3D"}
                 ],
                 "Modelos OSI/TCP-IP": [
                     {"tipo": "Referencia", "titulo": "ISO/IEC 7498 (OSI Model)", "url": "https://www.iso.org/standard/14299.html"},
                     {"tipo": "documento", "titulo": "Comparación OSI y TCP/IP (Microsoft)", "url": "https://learn.microsoft.com/es-es/troubleshoot/windows-server/networking/tcpip-layer-model-vs-osi-layer-model"},
-                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=vv4y_m5_4gQ"}
+                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=MqpIJLmMny8&pp=ygUSTW9kZWxvcyBPU0kvVENQLUlQ"}
                 ],
                 "Seguridad de Red": [
                     {"tipo": "Referencia", "titulo": "NIST SP 800-12 (Introduction to Computer Security)", "url": "https://csrc.nist.gov/publications/detail/sp/800-12/rev-1/archive/1995-10-01"},
@@ -362,17 +362,17 @@ def main():
                 ],
                 "Dispositivos de Red": [
                     {"tipo": "Referencia", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=nN4rN9wN7v8"}
+                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=oCzPbiN5wao&pp=ygUTRGlzcG9zaXRpdm9zIGRlIFJlZA%3D%3D"}
                 ],
                 "Direccionamiento IP": [
                     {"tipo": "Referencia", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
                     {"tipo": "documento", "titulo": "Direccionamiento IP (UNAM)", "url": "http://www.dgsca.unam.mx/publicaciones/curso/ip/ip-2.html"},
-                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=0d854y1t_1M"}
+                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=801xu7tGEfA&pp=ygUUIkRpcmVjY2lvbmFtaWVudG8gSVA%3D"}
                 ],
                 "Enrutamiento": [
                     {"tipo": "Referencia", "titulo": "RFC 1058 (RIP Version 1)", "url": "https://datatracker.ietf.org/doc/html/rfc1058"},
                     {"tipo": "documento", "titulo": "Introducción al Enrutamiento (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/routing-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=W-r49j2_eI4"}
+                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=nuHUTToftoQ&pp=ygUMRW5ydXRhbWllbnRv"}
                 ],
                 "Conmutación": [
                     {"tipo": "Referencia", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
@@ -384,7 +384,7 @@ def main():
                 ],
                 "Capa Física": [
                     {"tipo": "Referencia", "titulo": "Capa Física del Modelo OSI (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Capa_f%C3%ADsica"},
-                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=S2uM-w7y1lM"}
+                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=wfmExYHthbA&pp=ygUMQ2FwYSBGw61zaWNh0gcJCccJAYcqIYzv"}
                 ],
             }
 
