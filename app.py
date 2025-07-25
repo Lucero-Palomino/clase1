@@ -335,8 +335,8 @@ def main():
 
             st.markdown("### 📚 Recursos Adicionales para Profundizar")
             st.markdown("Aquí te dejo enlaces a papers, documentos y videos clave para este tema:")
-
-             recursos_por_tema = {
+            
+            recursos_por_tema = {
                 "Redes LAN": [
                     {"tipo": "Referencia", "titulo": "¿Qué es una LAN?", "url": "https://www-cisco-com.translate.goog/c/en/us/products/switches/what-is-a-lan-local-area-network.html?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=tc"},
                     {"tipo": "Referencia", "titulo": "Red LAN", "url": "https://www.godaddy.com/resources/latam/tecnologia/que-es-una-red-lan"},
