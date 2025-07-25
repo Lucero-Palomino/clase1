@@ -3,7 +3,9 @@ import google.generativeai as genai
 import os
 import random
 import re
-import time # Importar time para la marca de tiempo del PDF
+import time
+from datetime import datetime
+import pytz # Para manejar zonas horarias
 
 # --- Importaciones para PDF ---
 from reportlab.lib.pagesizes import letter
@@ -134,10 +136,12 @@ def parse_multiple_choice_question(raw_data):
         'question': question_text,
         'options': new_options_display,
         'correct_answer_char': new_correct_char,
-        'explanation': explanation
+        'explanation': explanation,
+        'original_correct_option_text': next((opt[3:].strip() for opt in options_raw if opt.startswith(correct_answer_char + ')')), "")
     }
 
- # --- FUNCIÓN PARA GENERAR PDF ---
+
+# --- FUNCIÓN PARA GENERAR PDF ---
 def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_name="Estudiante", level="N/A", topic="N/A"):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
@@ -146,23 +150,22 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     styles = getSampleStyleSheet()
 
     # Estilos personalizados para el PDF
-    styles.add(ParagraphStyle(name='TitleStyle', fontSize=20, leading=24,
+    styles.add(ParagraphStyle(name='TitleStyle', fontSize=24, leading=28,
                                alignment=TA_CENTER, spaceAfter=20))
-    # --- MODIFICACIONES AQUÍ para la información del estudiante/examen ---
-    styles.add(ParagraphStyle(name='StudentInfoStyle', fontSize=9, leading=10, # Más pequeño
-                               alignment=TA_RIGHT, spaceAfter=2)) # Alineado a la derecha y más junto
-    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=12, leading=16,
+    styles.add(ParagraphStyle(name='SubTitleStyle', fontSize=16, leading=20,
+                               alignment=TA_CENTER, spaceAfter=15))
+    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=14, leading=18,
                                alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='NormalStyle', fontSize=10, leading=12,
-                               alignment=TA_LEFT, spaceAfter=8, leftIndent=10))
-    styles.add(ParagraphStyle(name='OptionStyle', fontSize=9, leading=11,
-                               alignment=TA_LEFT, spaceAfter=4, leftIndent=30))
-    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=10, leading=12,
-                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold', leftIndent=10))
-    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=10, leading=12,
-                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold', leftIndent=10))
-    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=9, leading=11,
-                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray', leftIndent=20))
+    styles.add(ParagraphStyle(name='NormalStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8))
+    styles.add(ParagraphStyle(name='OptionStyle', fontSize=11, leading=13,
+                               alignment=TA_LEFT, spaceAfter=4, leftIndent=20)) # Indentación para las opciones
+    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=11, leading=13,
+                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray'))
 
 
     story = []
@@ -171,27 +174,22 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     peru_tz = pytz.timezone('America/Lima') # Lima es la zona horaria para Puno, Perú
     current_time_peru = datetime.now(peru_tz).strftime('%Y-%m-%d %H:%M:%S')
 
-    # Título principal del examen
+    # Título y nombre del estudiante
     story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
-    story.append(Spacer(1, 0.2 * inch)) # Espacio después del título principal
+    story.append(Paragraph(f"Estudiante: {user_name}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Nivel: {level}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Tema General: {topic}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['SubTitleStyle']))
+    story.append(Spacer(1, 0.2 * inch))
 
-    # --- INFORMACIÓN DEL ESTUDIANTE/EXAMEN (MOVIDO Y AJUSTADO) ---
-    # Usamos un Frame o una tabla para controlar mejor la posición
-    # Para simplicidad sin usar Frames complejos, podemos usar Paragraphs con TA_RIGHT
-    # y control de espaciado.
-    story.append(Paragraph(f"Estudiante: {user_name}", styles['StudentInfoStyle']))
-    story.append(Paragraph(f"Nivel: {level}", styles['StudentInfoStyle']))
-    story.append(Paragraph(f"Tema General: {topic}", styles['StudentInfoStyle']))
-    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['StudentInfoStyle']))
-    story.append(Spacer(1, 0.3 * inch)) # Espacio después de la información del estudiante
-
-    # Resumen de puntuación
+    # Resumen
     story.append(Paragraph(f"Puntuación Final: {score} / {total_questions}", styles['HeaderStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
     # Detalles de cada pregunta
     for i, user_ans_data in enumerate(user_answers):
         question_info = all_questions[user_ans_data['question_index']]
+        # Cambiado de "--- Pregunta X ---" a "X)"
         story.append(Paragraph(f"**{i + 1})** {question_info['question']}", styles['NormalStyle']))
         story.append(Spacer(1, 0.1 * inch))
 
@@ -206,6 +204,7 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
         story.append(Paragraph(f"Tu respuesta: **{user_ans_data['user_choice_full_text']}**", styles['NormalStyle']))
 
         # Mostrar la respuesta correcta de forma completa
+        # Busca la opción completa correspondiente a la letra correcta
         correct_option_full_text = ""
         for option in question_info['options']:
             if option.startswith(user_ans_data['correct_char'] + ')'):
@@ -222,7 +221,7 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
 
         story.append(Spacer(1, 0.2 * inch))
         if (i + 1) % 3 == 0 and (i + 1) != total_questions: # Añade un salto de página cada 3 preguntas
-            story.append(PageBreak())
+             story.append(PageBreak())
 
     doc.build(story)
     buffer.seek(0)
@@ -238,7 +237,7 @@ def main():
     except FileNotFoundError:
         st.error("Error: El archivo 'style.css' no se encontró. Asegúrate de que esté en la misma carpeta que 'app.py'.")
 
-    st.title("👨‍🏫 ARQUITECTURA DE REDES 🌐")
+    st.title("   ARQUITECTURA DE REDES    ")
     st.markdown("---")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
 
@@ -283,6 +282,8 @@ def main():
     # Inicializar el estado de la actividad si no existe
     if 'current_activity' not in st.session_state:
         st.session_state['current_activity'] = None
+    if 'user_name' not in st.session_state: # Asegurarse de que 'user_name' siempre exista
+        st.session_state['user_name'] = ""
 
     # Crear las columnas para los botones de "cuadros grandes"
     col1, col2 = st.columns(2)
@@ -292,35 +293,37 @@ def main():
         if st.button("Explicar un concepto", key="btn_explicar_concepto", use_container_width=True):
             st.session_state['current_activity'] = 'explicar'
             # Resetear estado del examen si se cambia de actividad
-            # Se resetean todas las claves explícitamente para evitar KeyError
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
+            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col2:
         if st.button("Proponer un ejercicio", key="btn_proponer_ejercicio", use_container_width=True):
             st.session_state['current_activity'] = 'proponer'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
+            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col3:
         if st.button("Evaluar mi respuesta al ejercicio", key="btn_evaluar_respuesta", use_container_width=True):
             st.session_state['current_activity'] = 'evaluar'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
+            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col4:
         if st.button("Tomar examen", key="btn_tomar_examen", use_container_width=True):
             st.session_state['current_activity'] = 'examen'
             # Siempre se reinicia el estado del examen al hacer clic en "Tomar examen"
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
-            # Asegurar que 'exam_started' y 'exam_active_session' se inicien en False para que el botón "Comenzar Examen Ahora" aparezca
             st.session_state['exam_started'] = False
             st.session_state['exam_active_session'] = False
-
+            st.session_state['name_entered_for_exam'] = False # NUEVO: Flag para controlar si ya se preguntó el nombre
+            st.session_state['user_name'] = "" # Asegurar que el nombre esté vacío al inicio del flujo del examen
 
     st.markdown("---") # Separador después de los botones principales
 
@@ -335,7 +338,7 @@ def main():
 
             st.markdown("### 📚 Recursos Adicionales para Profundizar")
             st.markdown("Aquí te dejo enlaces a papers, documentos y videos clave para este tema:")
-            
+
             recursos_por_tema = {
                 "Redes LAN": [
                     {"tipo": "Referencia", "titulo": "¿Qué es una LAN?", "url": "https://www-cisco-com.translate.goog/c/en/us/products/switches/what-is-a-lan-local-area-network.html?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=tc"},
@@ -384,7 +387,6 @@ def main():
                     {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=wfmExYHthbA&pp=ygUMQ2FwYSBGw61zaWNh0gcJCccJAYcqIYzv"}
                 ],
             }
-                
 
             if tema_seleccionado in recursos_por_tema:
                 for recurso in recursos_por_tema[tema_seleccionado]:
@@ -448,10 +450,27 @@ def main():
             st.session_state['current_progress'] = 0.0
         if 'total_questions' not in st.session_state:
             st.session_state['total_questions'] = 10
-        # --- FIN INICIALIZACIÓN ROBUSTA ---
+        if 'name_entered_for_exam' not in st.session_state: # NUEVO: Inicializar el flag del nombre
+            st.session_state['name_entered_for_exam'] = False
+        if 'user_name' not in st.session_state: # Asegurar que 'user_name' exista
+            st.session_state['user_name'] = ""
+        # Guardar nivel y tema seleccionados para el PDF
+        st.session_state['exam_level'] = nivel_estudiante
+        st.session_state['exam_topic'] = tema_seleccionado
 
-        if not st.session_state['exam_started']:
+
+        # --- Flujo para pedir el nombre solo si se presiona "Tomar examen" ---
+        if not st.session_state['name_entered_for_exam']:
+            st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input_exam_flow")
+            if st.button("Confirmar Nombre y Continuar", key="confirm_name_button"):
+                if st.session_state['user_name']:
+                    st.session_state['name_entered_for_exam'] = True
+                    st.rerun() # Volver a ejecutar para ocultar el campo de nombre y mostrar el botón de inicio de examen
+                else:
+                    st.warning("Por favor, ingresa tu nombre para continuar.")
+        elif not st.session_state['exam_started']:
             if st.button("Comenzar Examen Ahora :rocket:", key="start_exam_button"):
+                # No necesitamos validar el nombre aquí de nuevo, ya lo hicimos arriba.
                 st.session_state['exam_started'] = True
                 st.session_state['current_question_index'] = 0
                 st.session_state['score'] = 0
@@ -472,14 +491,28 @@ def main():
                             generated_themes.clear()
 
                         current_sub_tema = random.choice(available_themes)
-                        question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
-                        parsed_question = parse_multiple_choice_question(question_data_raw)
+                        try:
+                            question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
+                            parsed_question = parse_multiple_choice_question(question_data_raw)
 
-                        if parsed_question:
-                            st.session_state['questions'].append(parsed_question)
-                            generated_themes.add(current_sub_tema)
-                        else:
-                            st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
+                            if parsed_question:
+                                st.session_state['questions'].append(parsed_question)
+                                generated_themes.add(current_sub_tema)
+                            else:
+                                st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
+
+                            # --- Añadir un pequeño retraso aquí ---
+                            time.sleep(1.5) # Espera 1.5 segundos entre cada llamada a la API
+                            # Puedes ajustar este valor. Si el error persiste, auméntalo.
+
+                        except Exception as e:
+                            st.error(f"Error al generar pregunta para '{current_sub_tema}': {e}. Es posible que hayas excedido la cuota de la API. Por favor, inténtalo de nuevo en unos minutos o revisa tus cuotas en Google Cloud Console.")
+                            # Detener el proceso de generación de preguntas si hay un error de API
+                            st.session_state['exam_started'] = False
+                            st.session_state['exam_active_session'] = False
+                            st.session_state['exam_finished'] = False
+                            break # Salir del bucle while
+
                 if len(st.session_state['questions']) == st.session_state['total_questions']:
                      st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
 
@@ -513,12 +546,13 @@ def main():
 
                 if st.button("Comprobar :white_check_mark:", key=f"check_answer_button_{st.session_state['current_question_index']}"):
                     if selected_option_label:
-                        user_answer_char = selected_option_label[0]
+                        user_answer_char = selected_option_label[0] # Solo la letra (A, B, C, D)
 
-                        # Almacenar la respuesta del usuario para revisión posterior
+                        # Almacenar la respuesta del usuario para revisión posterior, incluyendo el texto completo
                         st.session_state['user_answers'].append({
                             'question_index': st.session_state['current_question_index'],
                             'user_choice_char': user_answer_char,
+                            'user_choice_full_text': selected_option_label, # Guardamos el texto completo aquí
                             'correct_char': current_question['correct_answer_char'],
                             'question_text': current_question['question'],
                             'explanation': current_question['explanation']
@@ -563,18 +597,50 @@ def main():
         # Lógica para mostrar los resultados finales del examen
         if st.session_state['exam_finished']:
             st.balloons()
-            st.success(f"🎉 ¡Examen Terminado! Has respondido correctamente a **{st.session_state['score']}** de **{st.session_state['total_questions']}** preguntas. ¡Felicidades! 🎉")
+            st.success(f"🎉 ¡Examen Terminado! Has respondido correctamente a **{st.session_state['score']}** de **{st.session_state['total_questions']}** preguntas. ¡Felicidades, {st.session_state['user_name']}! 🎉")
             st.markdown("---")
             st.subheader("Resultados Detallados:")
 
             st.markdown(f"**Puntos obtenidos en este examen:** {st.session_state['score'] * 10} XP (por ejemplo)")
 
+            # Usar user_answers y questions para el PDF
+            pdf_user_name = st.session_state['user_name'] if st.session_state['user_name'] else "Estudiante"
+            pdf_buffer = generate_exam_pdf(
+                st.session_state['score'],
+                st.session_state['total_questions'],
+                st.session_state['user_answers'],
+                st.session_state['questions'],
+                user_name=pdf_user_name,
+                level=st.session_state.get('exam_level', 'N/A'), # Pasa el nivel
+                topic=st.session_state.get('exam_topic', 'N/A')   # Pasa el tema
+            )
+            st.download_button(
+                label="Descargar Resultados del Examen como PDF 📄",
+                data=pdf_buffer,
+                file_name=f"Resultados_Examen_Redes_{pdf_user_name.replace(' ', '_')}_{time.strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf",
+                key="download_pdf_button"
+            )
+
             for i, user_ans in enumerate(st.session_state['user_answers']):
                 question_info = st.session_state['questions'][user_ans['question_index']]
                 st.markdown(f"---")
-                st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}")
-                st.markdown(f"Tu respuesta: **{user_ans['user_choice_char']}**")
-                st.markdown(f"Respuesta correcta: **{user_ans['correct_char']}**")
+                st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}") # Aquí mantengo "Pregunta X:" para el display en web
+
+                st.markdown("**Opciones:**")
+                for option_text in question_info['options']:
+                    st.markdown(f"- {option_text}")
+
+                st.markdown(f"Tu respuesta: **{user_ans['user_choice_full_text']}**")
+
+                # Obtener el texto completo de la respuesta correcta para mostrarlo en Streamlit
+                correct_option_full_text_display = ""
+                for option in question_info['options']:
+                    if option.startswith(user_ans['correct_char'] + ')'):
+                        correct_option_full_text_display = option
+                        break
+                st.markdown(f"Respuesta correcta: **{correct_option_full_text_display}**")
+
 
                 if user_ans['user_choice_char'] == user_ans['correct_char']:
                     st.success("✅ ¡Correcto!")
@@ -584,26 +650,11 @@ def main():
 
             st.markdown("---")
 
-            # --- Botón de descarga de PDF ---
-            pdf_buffer = generate_exam_pdf(
-                st.session_state['score'],
-                st.session_state['total_questions'],
-                st.session_state['user_answers'],
-                st.session_state['questions'] # Pasar todas las preguntas para tener los textos completos
-            )
-            st.download_button(
-                label="Descargar Resultados del Examen como PDF 📄",
-                data=pdf_buffer,
-                file_name=f"Resultados_Examen_Redes_{time.strftime('%Y%m%d_%H%M%S')}.pdf",
-                mime="application/pdf",
-                key="download_pdf_button"
-            )
-            # --- Fin Botón de descarga de PDF ---
-
             if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
-                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam', 'exam_level', 'exam_topic']:
                     if key in st.session_state:
                         del st.session_state[key]
+                st.session_state['user_name'] = "" # Limpiar el nombre al reiniciar examen
                 st.rerun()
 
 # --- Punto de Entrada de la Aplicación ---
