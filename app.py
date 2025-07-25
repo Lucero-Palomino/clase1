@@ -12,7 +12,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT # Importar TA_RIGHT
 import io
 import base64
 # --- Fin Importaciones para PDF ---
@@ -150,22 +150,23 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     styles = getSampleStyleSheet()
 
     # Estilos personalizados para el PDF
-    styles.add(ParagraphStyle(name='TitleStyle', fontSize=24, leading=28,
+    styles.add(ParagraphStyle(name='TitleStyle', fontSize=20, leading=24,
                                alignment=TA_CENTER, spaceAfter=20))
-    styles.add(ParagraphStyle(name='SubTitleStyle', fontSize=16, leading=20,
-                               alignment=TA_CENTER, spaceAfter=15))
-    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=14, leading=18,
+    # --- MODIFICACIONES AQUÍ para la información del estudiante/examen ---
+    styles.add(ParagraphStyle(name='StudentInfoStyle', fontSize=9, leading=10, # Más pequeño
+                               alignment=TA_RIGHT, spaceAfter=2)) # Alineado a la derecha y más junto
+    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=12, leading=16,
                                alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='NormalStyle', fontSize=12, leading=14,
-                               alignment=TA_LEFT, spaceAfter=8))
-    styles.add(ParagraphStyle(name='OptionStyle', fontSize=11, leading=13,
-                               alignment=TA_LEFT, spaceAfter=4, leftIndent=20)) # Indentación para las opciones
-    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=12, leading=14,
-                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=12, leading=14,
-                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=11, leading=13,
-                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray'))
+    styles.add(ParagraphStyle(name='NormalStyle', fontSize=10, leading=12,
+                               alignment=TA_LEFT, spaceAfter=8, leftIndent=10))
+    styles.add(ParagraphStyle(name='OptionStyle', fontSize=9, leading=11,
+                               alignment=TA_LEFT, spaceAfter=4, leftIndent=30))
+    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=10, leading=12,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold', leftIndent=10))
+    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=10, leading=12,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold', leftIndent=10))
+    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=9, leading=11,
+                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray', leftIndent=20))
 
 
     story = []
@@ -174,22 +175,27 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     peru_tz = pytz.timezone('America/Lima') # Lima es la zona horaria para Puno, Perú
     current_time_peru = datetime.now(peru_tz).strftime('%Y-%m-%d %H:%M:%S')
 
-    # Título y nombre del estudiante
+    # Título principal del examen
     story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
-    story.append(Paragraph(f"Estudiante: {user_name}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Nivel: {level}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Tema General: {topic}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['SubTitleStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.2 * inch)) # Espacio después del título principal
 
-    # Resumen
+    # --- INFORMACIÓN DEL ESTUDIANTE/EXAMEN (MOVIDO Y AJUSTADO) ---
+    # Usamos un Frame o una tabla para controlar mejor la posición
+    # Para simplicidad sin usar Frames complejos, podemos usar Paragraphs con TA_RIGHT
+    # y control de espaciado.
+    story.append(Paragraph(f"Estudiante: {user_name}", styles['StudentInfoStyle']))
+    story.append(Paragraph(f"Nivel: {level}", styles['StudentInfoStyle']))
+    story.append(Paragraph(f"Tema General: {topic}", styles['StudentInfoStyle']))
+    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['StudentInfoStyle']))
+    story.append(Spacer(1, 0.3 * inch)) # Espacio después de la información del estudiante
+
+    # Resumen de puntuación
     story.append(Paragraph(f"Puntuación Final: {score} / {total_questions}", styles['HeaderStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
     # Detalles de cada pregunta
     for i, user_ans_data in enumerate(user_answers):
         question_info = all_questions[user_ans_data['question_index']]
-        # Cambiado de "--- Pregunta X ---" a "X)"
         story.append(Paragraph(f"**{i + 1})** {question_info['question']}", styles['NormalStyle']))
         story.append(Spacer(1, 0.1 * inch))
 
@@ -204,7 +210,6 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
         story.append(Paragraph(f"Tu respuesta: **{user_ans_data['user_choice_full_text']}**", styles['NormalStyle']))
 
         # Mostrar la respuesta correcta de forma completa
-        # Busca la opción completa correspondiente a la letra correcta
         correct_option_full_text = ""
         for option in question_info['options']:
             if option.startswith(user_ans_data['correct_char'] + ')'):
@@ -221,7 +226,7 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
 
         story.append(Spacer(1, 0.2 * inch))
         if (i + 1) % 3 == 0 and (i + 1) != total_questions: # Añade un salto de página cada 3 preguntas
-             story.append(PageBreak())
+            story.append(PageBreak())
 
     doc.build(story)
     buffer.seek(0)
