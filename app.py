@@ -233,12 +233,10 @@ def main():
     st.markdown("---")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
 
-    # --- Campo para el nombre del usuario ---
-    if 'user_name' not in st.session_state:
-        st.session_state['user_name'] = ""
-
-    st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input")
-    # --- Fin campo nombre ---
+    # Eliminamos el st.text_input de aquí, se moverá más abajo.
+    # if 'user_name' not in st.session_state:
+    #     st.session_state['user_name'] = ""
+    # st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input")
 
     temas_principales = ["Redes LAN", "Protocolos de Red", "Modelos OSI/TCP-IP", "Seguridad de Red", "Dispositivos de Red", "Direccionamiento IP", "Enrutamiento", "Conmutación", "Subredes", "Capa Física"]
 
@@ -281,6 +279,8 @@ def main():
     # Inicializar el estado de la actividad si no existe
     if 'current_activity' not in st.session_state:
         st.session_state['current_activity'] = None
+    if 'user_name' not in st.session_state: # Asegurarse de que 'user_name' siempre exista
+        st.session_state['user_name'] = ""
 
     # Crear las columnas para los botones de "cuadros grandes"
     col1, col2 = st.columns(2)
@@ -290,35 +290,37 @@ def main():
         if st.button("Explicar un concepto", key="btn_explicar_concepto", use_container_width=True):
             st.session_state['current_activity'] = 'explicar'
             # Resetear estado del examen si se cambia de actividad
-            # Se resetean todas las claves explícitamente para evitar KeyError
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
+            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col2:
         if st.button("Proponer un ejercicio", key="btn_proponer_ejercicio", use_container_width=True):
             st.session_state['current_activity'] = 'proponer'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
+            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col3:
         if st.button("Evaluar mi respuesta al ejercicio", key="btn_evaluar_respuesta", use_container_width=True):
             st.session_state['current_activity'] = 'evaluar'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
+            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col4:
         if st.button("Tomar examen", key="btn_tomar_examen", use_container_width=True):
             st.session_state['current_activity'] = 'examen'
             # Siempre se reinicia el estado del examen al hacer clic en "Tomar examen"
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                 if key in st.session_state:
                     del st.session_state[key]
-            # Asegurar que 'exam_started' y 'exam_active_session' se inicien en False para que el botón "Comenzar Examen Ahora" aparezca
             st.session_state['exam_started'] = False
             st.session_state['exam_active_session'] = False
-
+            st.session_state['name_entered_for_exam'] = False # NUEVO: Flag para controlar si ya se preguntó el nombre
+            st.session_state['user_name'] = "" # Asegurar que el nombre esté vacío al inicio del flujo del examen
 
     st.markdown("---") # Separador después de los botones principales
 
@@ -445,57 +447,67 @@ def main():
             st.session_state['current_progress'] = 0.0
         if 'total_questions' not in st.session_state:
             st.session_state['total_questions'] = 10
-        # --- FIN INICIALIZACIÓN ROBUSTA ---
+        if 'name_entered_for_exam' not in st.session_state: # NUEVO: Inicializar el flag del nombre
+            st.session_state['name_entered_for_exam'] = False
+        if 'user_name' not in st.session_state: # Asegurar que 'user_name' exista
+            st.session_state['user_name'] = ""
 
-        if not st.session_state['exam_started']:
-            if st.button("Comenzar Examen Ahora :rocket:", key="start_exam_button"):
-                if not st.session_state['user_name']:
-                    st.warning("¡Por favor, ingresa tu nombre antes de comenzar el examen!")
+        # --- Flujo para pedir el nombre solo si se presiona "Tomar examen" ---
+        if not st.session_state['name_entered_for_exam']:
+            st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input_exam_flow")
+            if st.button("Confirmar Nombre y Continuar", key="confirm_name_button"):
+                if st.session_state['user_name']:
+                    st.session_state['name_entered_for_exam'] = True
+                    st.rerun() # Volver a ejecutar para ocultar el campo de nombre y mostrar el botón de inicio de examen
                 else:
-                    st.session_state['exam_started'] = True
-                    st.session_state['current_question_index'] = 0
-                    st.session_state['score'] = 0
-                    st.session_state['questions'] = []
-                    st.session_state['user_answers'] = []
-                    st.session_state['exam_finished'] = False
-                    st.session_state['exam_active_session'] = True
-                    st.session_state['current_progress'] = 0.0
-                    st.session_state['total_questions'] = 10
+                    st.warning("Por favor, ingresa tu nombre para continuar.")
+        elif not st.session_state['exam_started']:
+            if st.button("Comenzar Examen Ahora :rocket:", key="start_exam_button"):
+                # No necesitamos validar el nombre aquí de nuevo, ya lo hicimos arriba.
+                st.session_state['exam_started'] = True
+                st.session_state['current_question_index'] = 0
+                st.session_state['score'] = 0
+                st.session_state['questions'] = []
+                st.session_state['user_answers'] = []
+                st.session_state['exam_finished'] = False
+                st.session_state['exam_active_session'] = True
+                st.session_state['current_progress'] = 0.0
+                st.session_state['total_questions'] = 10
 
-                    with st.spinner("Generando las 10 preguntas del examen..."):
-                        generated_themes = set()
-                        while len(st.session_state['questions']) < st.session_state['total_questions']:
-                            available_themes = [t for t in posibles_sub_temas_para_examen if t not in generated_themes]
-                            if not available_themes:
-                                st.warning("Se han utilizado todos los sub-temas posibles. Reutilizando temas para completar el examen.")
-                                available_themes = list(posibles_sub_temas_para_examen)
-                                generated_themes.clear()
+                with st.spinner("Generando las 10 preguntas del examen..."):
+                    generated_themes = set()
+                    while len(st.session_state['questions']) < st.session_state['total_questions']:
+                        available_themes = [t for t in posibles_sub_temas_para_examen if t not in generated_themes]
+                        if not available_themes:
+                            st.warning("Se han utilizado todos los sub-temas posibles. Reutilizando temas para completar el examen.")
+                            available_themes = list(posibles_sub_temas_para_examen)
+                            generated_themes.clear()
 
-                            current_sub_tema = random.choice(available_themes)
-                            try:
-                                question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
-                                parsed_question = parse_multiple_choice_question(question_data_raw)
+                        current_sub_tema = random.choice(available_themes)
+                        try:
+                            question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
+                            parsed_question = parse_multiple_choice_question(question_data_raw)
 
-                                if parsed_question:
-                                    st.session_state['questions'].append(parsed_question)
-                                    generated_themes.add(current_sub_tema)
-                                else:
-                                    st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
+                            if parsed_question:
+                                st.session_state['questions'].append(parsed_question)
+                                generated_themes.add(current_sub_tema)
+                            else:
+                                st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
 
-                                # --- Añadir un pequeño retraso aquí ---
-                                time.sleep(1.5) # Espera 1.5 segundos entre cada llamada a la API
-                                # Puedes ajustar este valor. Si el error persiste, auméntalo.
+                            # --- Añadir un pequeño retraso aquí ---
+                            time.sleep(1.5) # Espera 1.5 segundos entre cada llamada a la API
+                            # Puedes ajustar este valor. Si el error persiste, auméntalo.
 
-                            except Exception as e:
-                                st.error(f"Error al generar pregunta para '{current_sub_tema}': {e}. Es posible que hayas excedido la cuota de la API. Por favor, inténtalo de nuevo en unos minutos o revisa tus cuotas en Google Cloud Console.")
-                                # Detener el proceso de generación de preguntas si hay un error de API
-                                st.session_state['exam_started'] = False
-                                st.session_state['exam_active_session'] = False
-                                st.session_state['exam_finished'] = False
-                                break # Salir del bucle while
+                        except Exception as e:
+                            st.error(f"Error al generar pregunta para '{current_sub_tema}': {e}. Es posible que hayas excedido la cuota de la API. Por favor, inténtalo de nuevo en unos minutos o revisa tus cuotas en Google Cloud Console.")
+                            # Detener el proceso de generación de preguntas si hay un error de API
+                            st.session_state['exam_started'] = False
+                            st.session_state['exam_active_session'] = False
+                            st.session_state['exam_finished'] = False
+                            break # Salir del bucle while
 
-                    if len(st.session_state['questions']) == st.session_state['total_questions']:
-                         st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
+                if len(st.session_state['questions']) == st.session_state['total_questions']:
+                     st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
 
         # Lógica para mostrar preguntas y manejar la navegación durante el examen
         if st.session_state.get('exam_active_session', False) and not st.session_state['exam_finished']:
@@ -568,7 +580,7 @@ def main():
                             st.session_state['exam_finished'] = True
                             st.session_state['exam_active_session'] = False
                         else:
-                            st.rerun() # <-- CORREGIDO st.experimental_rerun()
+                            st.rerun()
                     else:
                         st.warning("Por favor, selecciona una opción antes de comprobar.")
             else:
@@ -605,7 +617,7 @@ def main():
                 question_info = st.session_state['questions'][user_ans['question_index']]
                 st.markdown(f"---")
                 st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}")
-                
+
                 st.markdown("**Opciones:**")
                 for option_text in question_info['options']:
                     st.markdown(f"- {option_text}")
@@ -630,10 +642,11 @@ def main():
             st.markdown("---")
 
             if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
-                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
+                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
                     if key in st.session_state:
                         del st.session_state[key]
-                st.rerun() # <-- CORREGIDO st.experimental_rerun()
+                st.session_state['user_name'] = "" # Limpiar el nombre al reiniciar examen
+                st.rerun()
 
 # --- Punto de Entrada de la Aplicación ---
 if __name__ == "__main__":
