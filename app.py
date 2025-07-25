@@ -3,9 +3,7 @@ import google.generativeai as genai
 import os
 import random
 import re
-import time
-from datetime import datetime
-import pytz # Para manejar zonas horarias
+import time # Importar time para la marca de tiempo del PDF
 
 # --- Importaciones para PDF ---
 from reportlab.lib.pagesizes import letter
@@ -22,8 +20,7 @@ import base64
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
-# --- Funciones Core del Chatbot (Mantener sin cambios) ---
-# ... (mantén tus funciones explicar_concepto, generar_ejercicio, etc. aquí) ...
+# --- Funciones Core del Chatbot ---
 
 def explicar_concepto(tema):
     """Genera una explicación detallada de un concepto de red."""
@@ -137,49 +134,40 @@ def parse_multiple_choice_question(raw_data):
         'question': question_text,
         'options': new_options_display,
         'correct_answer_char': new_correct_char,
-        'explanation': explanation,
-        'original_correct_option_text': next((opt[3:].strip() for opt in options_raw if opt.startswith(correct_answer_char + ')')), "")
+        'explanation': explanation
     }
 
-# --- FUNCIÓN PARA GENERAR PDF (MODIFICADA EN EL SIGUIENTE PASO) ---
-def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_name="Estudiante", level="N/A", topic="N/A"):
+
+# --- FUNCIÓN PARA GENERAR PDF ---
+def generate_exam_pdf(score, total_questions, user_answers, all_questions):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
                             rightMargin=inch, leftMargin=inch,
                             topMargin=inch, bottomMargin=inch)
     styles = getSampleStyleSheet()
 
-    # Estilos personalizados para el PDF (MODIFICADOS AQUÍ)
-    styles.add(ParagraphStyle(name='TitleStyle', fontSize=20, leading=24, # Reducido
+    # Estilos personalizados para el PDF
+    styles.add(ParagraphStyle(name='TitleStyle', fontSize=24, leading=28,
                                alignment=TA_CENTER, spaceAfter=20))
-    styles.add(ParagraphStyle(name='SubTitleStyle', fontSize=14, leading=18, # Reducido
+    styles.add(ParagraphStyle(name='SubTitleStyle', fontSize=16, leading=20,
                                alignment=TA_CENTER, spaceAfter=15))
-    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=12, leading=16, # Reducido
+    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=14, leading=18,
                                alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='NormalStyle', fontSize=10, leading=12, # Reducido
-                               alignment=TA_LEFT, spaceAfter=8, leftIndent=10)) # Añadido leftIndent
-    styles.add(ParagraphStyle(name='OptionStyle', fontSize=9, leading=11, # Reducido
-                               alignment=TA_LEFT, spaceAfter=4, leftIndent=30)) # Aumentado indentación
-    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=10, leading=12, # Reducido
-                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold', leftIndent=10)) # Añadido leftIndent
-    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=10, leading=12, # Reducido
-                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold', leftIndent=10)) # Añadido leftIndent
-    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=9, leading=11, # Reducido
-                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray', leftIndent=20)) # Añadido leftIndent
+    styles.add(ParagraphStyle(name='NormalStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8))
+    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=12, leading=14,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=11, leading=13,
+                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray'))
 
 
     story = []
 
-    # Obtener la hora actual en la zona horaria de Puno, Perú
-    peru_tz = pytz.timezone('America/Lima') # Lima es la zona horaria para Puno, Perú
-    current_time_peru = datetime.now(peru_tz).strftime('%Y-%m-%d %H:%M:%S')
-
-    # Título y nombre del estudiante
+    # Título
     story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
-    story.append(Paragraph(f"Estudiante: {user_name}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Nivel: {level}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Tema General: {topic}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Fecha: {time.strftime('%Y-%m-%d %H:%M')}", styles['SubTitleStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
     # Resumen
@@ -187,33 +175,15 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     story.append(Spacer(1, 0.2 * inch))
 
     # Detalles de cada pregunta
-    for i, user_ans_data in enumerate(user_answers):
-        question_info = all_questions[user_ans_data['question_index']]
-        # Cambiado de "--- Pregunta X ---" a "X)"
-        story.append(Paragraph(f"**{i + 1})** {question_info['question']}", styles['NormalStyle']))
-        story.append(Spacer(1, 0.1 * inch))
+    for i, user_ans in enumerate(user_answers):
+        question_info = all_questions[user_ans['question_index']]
+        story.append(Paragraph(f"--- Pregunta {i + 1} ---", styles['HeaderStyle']))
+        story.append(Paragraph(f"**Pregunta:** {question_info['question']}", styles['NormalStyle']))
 
-        # Mostrar todas las opciones de la pregunta
-        story.append(Paragraph("Opciones:", styles['NormalStyle']))
-        for option_text in question_info['options']:
-            story.append(Paragraph(option_text, styles['OptionStyle']))
-        story.append(Spacer(1, 0.1 * inch))
+        story.append(Paragraph(f"Tu respuesta: **{user_ans['user_choice_char']}**", styles['NormalStyle']))
+        story.append(Paragraph(f"Respuesta correcta: **{user_ans['correct_char']}**", styles['NormalStyle']))
 
-
-        # Mostrar la respuesta del usuario de forma completa
-        story.append(Paragraph(f"Tu respuesta: **{user_ans_data['user_choice_full_text']}**", styles['NormalStyle']))
-
-        # Mostrar la respuesta correcta de forma completa
-        # Busca la opción completa correspondiente a la letra correcta
-        correct_option_full_text = ""
-        for option in question_info['options']:
-            if option.startswith(user_ans_data['correct_char'] + ')'):
-                correct_option_full_text = option
-                break
-        story.append(Paragraph(f"Respuesta correcta: **{correct_option_full_text}**", styles['NormalStyle']))
-
-
-        if user_ans_data['user_choice_char'] == user_ans_data['correct_char']:
+        if user_ans['user_choice_char'] == user_ans['correct_char']:
             story.append(Paragraph("Estado: Correcto ✅", styles['CorrectAnswerStyle']))
         else:
             story.append(Paragraph("Estado: Incorrecto ❌", styles['IncorrectAnswerStyle']))
@@ -221,7 +191,7 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
 
         story.append(Spacer(1, 0.2 * inch))
         if (i + 1) % 3 == 0 and (i + 1) != total_questions: # Añade un salto de página cada 3 preguntas
-            story.append(PageBreak())
+             story.append(PageBreak())
 
     doc.build(story)
     buffer.seek(0)
@@ -237,28 +207,10 @@ def main():
     except FileNotFoundError:
         st.error("Error: El archivo 'style.css' no se encontró. Asegúrate de que esté en la misma carpeta que 'app.py'.")
 
-    # --- Título y bienvenida mejorados ---
-    st.title("📚 Tutor de Arquitectura de Redes 🌐") # Título principal con iconos
+    st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios 🌐")
+    st.markdown("---")
+    st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
 
-    # Usamos un contenedor con una clase CSS para aplicar estilos específicos al mensaje de bienvenida
-    with st.container():
-        st.markdown('<div class="welcome-section">', unsafe_allow_html=True) # Abre el div con la clase
-        st.markdown("""
-        ¡Hola! 👋 Bienvenido a tu espacio personal para **explorar y dominar** la Arquitectura de Redes.
-        Estoy aquí para ser tu guía en este fascinante mundo, ofreciéndote:
-
-        * ✨ **Explicaciones Claras:** Conceptos complejos desglosados paso a paso.
-        * 🧠 **Ejercicios Prácticos:** Problemas diseñados para aplicar lo aprendido.
-        * 📈 **Feedback Detallado:** Evaluación de tus respuestas para un aprendizaje efectivo.
-        * 🏆 **Exámenes Interactivos:** Pon a prueba tus habilidades y rastrea tu progreso.
-
-        ¡Selecciona una opción abajo para empezar tu aventura en el conocimiento de redes! 🚀
-        """, unsafe_allow_html=True) # Importante: unsafe_allow_html=True para permitir el div
-        st.markdown('</div>', unsafe_allow_html=True) # Cierra el div
-
-    st.divider() # Una línea divisora más moderna y limpia
-
-    # ... (el resto de tu código de la función main() va aquí, sin cambios) ...
     temas_principales = ["Redes LAN", "Protocolos de Red", "Modelos OSI/TCP-IP", "Seguridad de Red", "Dispositivos de Red", "Direccionamiento IP", "Enrutamiento", "Conmutación", "Subredes", "Capa Física"]
 
     posibles_sub_temas_para_examen = [
@@ -300,8 +252,6 @@ def main():
     # Inicializar el estado de la actividad si no existe
     if 'current_activity' not in st.session_state:
         st.session_state['current_activity'] = None
-    if 'user_name' not in st.session_state: # Asegurarse de que 'user_name' siempre exista
-        st.session_state['user_name'] = ""
 
     # Crear las columnas para los botones de "cuadros grandes"
     col1, col2 = st.columns(2)
@@ -311,37 +261,35 @@ def main():
         if st.button("Explicar un concepto", key="btn_explicar_concepto", use_container_width=True):
             st.session_state['current_activity'] = 'explicar'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
+            # Se resetean todas las claves explícitamente para evitar KeyError
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                 if key in st.session_state:
                     del st.session_state[key]
-            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col2:
         if st.button("Proponer un ejercicio", key="btn_proponer_ejercicio", use_container_width=True):
             st.session_state['current_activity'] = 'proponer'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                 if key in st.session_state:
                     del st.session_state[key]
-            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col3:
         if st.button("Evaluar mi respuesta al ejercicio", key="btn_evaluar_respuesta", use_container_width=True):
             st.session_state['current_activity'] = 'evaluar'
             # Resetear estado del examen si se cambia de actividad
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                 if key in st.session_state:
                     del st.session_state[key]
-            st.session_state['user_name'] = "" # Limpiar el nombre al cambiar de actividad
     with col4:
         if st.button("Tomar examen", key="btn_tomar_examen", use_container_width=True):
             st.session_state['current_activity'] = 'examen'
             # Siempre se reinicia el estado del examen al hacer clic en "Tomar examen"
-            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
+            for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                 if key in st.session_state:
                     del st.session_state[key]
+            # Asegurar que 'exam_started' y 'exam_active_session' se inicien en False para que el botón "Comenzar Examen Ahora" aparezca
             st.session_state['exam_started'] = False
             st.session_state['exam_active_session'] = False
-            st.session_state['name_entered_for_exam'] = False # NUEVO: Flag para controlar si ya se preguntó el nombre
-            st.session_state['user_name'] = "" # Asegurar que el nombre esté vacío al inicio del flujo del examen
+
 
     st.markdown("---") # Separador después de los botones principales
 
@@ -359,50 +307,50 @@ def main():
 
             recursos_por_tema = {
                 "Redes LAN": [
-                    {"tipo": "Referencia", "titulo": "¿Qué es una LAN?", "url": "https://www-cisco-com.translate.goog/c/en/us/products/switches/what-is-a-lan-local-area-network.html?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=tc"},
-                    {"tipo": "Referencia", "titulo": "Red LAN", "url": "https://www.godaddy.com/resources/latam/tecnologia/que-es-una-red-lan"},
-                    {"tipo": "video", "titulo": "Fundamentos de Redes LAN (YouTube)", "url": "https://www.youtube.com/watch?v=VD5k_0q_fus"}
+                    {"tipo": "paper", "titulo": "IEEE 802.3 (Ethernet Standard)", "url": "https://standards.ieee.org/ieee/802.3/7328/"},
+                    {"tipo": "documento", "titulo": "Introducción a las Redes LAN (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/lan-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Fundamentos de Redes LAN (YouTube)", "url": "https://www.youtube.com/watch?v=F_f0S96sM8w"}
                 ],
                 "Protocolos de Red": [
-                    {"tipo": "Referencia", "titulo": "Definición", "url": "https://www.cloudflare.com/es-es/learning/network-layer/what-is-a-protocol/"},
-                    {"tipo": "Referencia", "titulo": "(IBM)", "url": "https://www.ibm.com/docs/es/aix/7.2.0?topic=protocols-internet-network-level"},
-                    {"tipo": "video", "titulo": "Qué son los protocolos de red", "url": "https://www.youtube.com/watch?v=hJqu97N_zhA&pp=ygURUHJvdG9jb2xvcyBkZSBSZWQ%3D"}
+                    {"tipo": "paper", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
+                    {"tipo": "documento", "titulo": "Protocolos TCP/IP (IBM)", "url": "https://www.ibm.com/docs/es/aix/7.2?topic=protocols-tcpip"},
+                    {"tipo": "video", "titulo": "Qué son los protocolos de red (YouTube)", "url": "https://www.youtube.com/watch?v=0n-rJ7W-47g"}
                 ],
                 "Modelos OSI/TCP-IP": [
-                    {"tipo": "Referencia", "titulo": "ISO/IEC 7498 (OSI Model)", "url": "https://www.iso.org/standard/14299.html"},
+                    {"tipo": "paper", "titulo": "ISO/IEC 7498 (OSI Model)", "url": "https://www.iso.org/standard/14299.html"},
                     {"tipo": "documento", "titulo": "Comparación OSI y TCP/IP (Microsoft)", "url": "https://learn.microsoft.com/es-es/troubleshoot/windows-server/networking/tcpip-layer-model-vs-osi-layer-model"},
-                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=MqpIJLmMny8&pp=ygUSTW9kZWxvcyBPU0kvVENQLUlQ"}
+                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=vv4y_m5_4gQ"}
                 ],
                 "Seguridad de Red": [
-                    {"tipo": "Referencia", "titulo": "NIST SP 800-12 (Introduction to Computer Security)", "url": "https://csrc.nist.gov/publications/detail/sp/800-12/rev-1/archive/1995-10-01"},
+                    {"tipo": "documento", "titulo": "NIST SP 800-12 (Introduction to Computer Security)", "url": "https://csrc.nist.gov/publications/detail/sp/800-12/rev-1/archive/1995-10-01"},
                     {"tipo": "documento", "titulo": "Conceptos Básicos de Ciberseguridad (CISCO)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/cybersecurity-fundamentals.html"},
                     {"tipo": "video", "titulo": "Fundamentos de Ciberseguridad (YouTube)", "url": "https://www.youtube.com/watch?v=Vl3rKqM9wI0"}
                 ],
                 "Dispositivos de Red": [
-                    {"tipo": "Referencia", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=oCzPbiN5wao&pp=ygUTRGlzcG9zaXRpdm9zIGRlIFJlZA%3D%3D"}
+                    {"tipo": "documento", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=nN4rN9wN7v8"}
                 ],
                 "Direccionamiento IP": [
-                    {"tipo": "Referencia", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
+                    {"tipo": "paper", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
                     {"tipo": "documento", "titulo": "Direccionamiento IP (UNAM)", "url": "http://www.dgsca.unam.mx/publicaciones/curso/ip/ip-2.html"},
-                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=801xu7tGEfA&pp=ygUUIkRpcmVjY2lvbmFtaWVudG8gSVA%3D"}
+                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=0d854y1t_1M"}
                 ],
                 "Enrutamiento": [
-                    {"tipo": "Referencia", "titulo": "RFC 1058 (RIP Version 1)", "url": "https://datatracker.ietf.org/doc/html/rfc1058"},
+                    {"tipo": "paper", "titulo": "RFC 1058 (RIP Version 1)", "url": "https://datatracker.ietf.org/doc/html/rfc1058"},
                     {"tipo": "documento", "titulo": "Introducción al Enrutamiento (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/routing-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=nuHUTToftoQ&pp=ygUMRW5ydXRhbWllbnRv"}
+                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=W-r49j2_eI4"}
                 ],
                 "Conmutación": [
-                    {"tipo": "Referencia", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
+                    {"tipo": "documento", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
                     {"tipo": "video", "titulo": "Switches: ¿Qué son y cómo funcionan? (YouTube)", "url": "https://www.youtube.com/watch?v=u8-hJv3f-9k"}
                 ],
                 "Subredes": [
-                    {"tipo": "Referencia", "titulo": "Subnetting (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Subred"},
+                    {"tipo": "documento", "titulo": "Subnetting (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Subred"},
                     {"tipo": "video", "titulo": "Tutorial de Subnetting paso a paso (YouTube)", "url": "https://www.youtube.com/watch?v=eE7yG0XzFqc"}
                 ],
                 "Capa Física": [
-                    {"tipo": "Referencia", "titulo": "Capa Física del Modelo OSI (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Capa_f%C3%ADsica"},
-                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=wfmExYHthbA&pp=ygUMQ2FwYSBGw61zaWNh0gcJCccJAYcqIYzv"}
+                    {"tipo": "documento", "titulo": "Capa Física del Modelo OSI (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Capa_f%C3%ADsica"},
+                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=S2uM-w7y1lM"}
                 ],
             }
 
@@ -468,27 +416,10 @@ def main():
             st.session_state['current_progress'] = 0.0
         if 'total_questions' not in st.session_state:
             st.session_state['total_questions'] = 10
-        if 'name_entered_for_exam' not in st.session_state: # NUEVO: Inicializar el flag del nombre
-            st.session_state['name_entered_for_exam'] = False
-        if 'user_name' not in st.session_state: # Asegurar que 'user_name' exista
-            st.session_state['user_name'] = ""
-        # Guardar nivel y tema seleccionados para el PDF
-        st.session_state['exam_level'] = nivel_estudiante
-        st.session_state['exam_topic'] = tema_seleccionado
+        # --- FIN INICIALIZACIÓN ROBUSTA ---
 
-
-        # --- Flujo para pedir el nombre solo si se presiona "Tomar examen" ---
-        if not st.session_state['name_entered_for_exam']:
-            st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input_exam_flow")
-            if st.button("Confirmar Nombre y Continuar", key="confirm_name_button"):
-                if st.session_state['user_name']:
-                    st.session_state['name_entered_for_exam'] = True
-                    st.rerun() # Volver a ejecutar para ocultar el campo de nombre y mostrar el botón de inicio de examen
-                else:
-                    st.warning("Por favor, ingresa tu nombre para continuar.")
-        elif not st.session_state['exam_started']:
+        if not st.session_state['exam_started']:
             if st.button("Comenzar Examen Ahora :rocket:", key="start_exam_button"):
-                # No necesitamos validar el nombre aquí de nuevo, ya lo hicimos arriba.
                 st.session_state['exam_started'] = True
                 st.session_state['current_question_index'] = 0
                 st.session_state['score'] = 0
@@ -509,30 +440,16 @@ def main():
                             generated_themes.clear()
 
                         current_sub_tema = random.choice(available_themes)
-                        try:
-                            question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
-                            parsed_question = parse_multiple_choice_question(question_data_raw)
+                        question_data_raw = generar_pregunta_multiple_choice(current_sub_tema, nivel_estudiante)
+                        parsed_question = parse_multiple_choice_question(question_data_raw)
 
-                            if parsed_question:
-                                st.session_state['questions'].append(parsed_question)
-                                generated_themes.add(current_sub_tema)
-                            else:
-                                st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
-
-                            # --- Añadir un pequeño retraso aquí ---
-                            time.sleep(1.5) # Espera 1.5 segundos entre cada llamada a la API
-                            # Puedes ajustar este valor. Si el error persiste, auméntalo.
-
-                        except Exception as e:
-                            st.error(f"Error al generar pregunta para '{current_sub_tema}': {e}. Es posible que hayas excedido la cuota de la API. Por favor, inténtalo de nuevo en unos minutos o revisa tus cuotas en Google Cloud Console.")
-                            # Detener el proceso de generación de preguntas si hay un error de API
-                            st.session_state['exam_started'] = False
-                            st.session_state['exam_active_session'] = False
-                            st.session_state['exam_finished'] = False
-                            break # Salir del bucle while
-
+                        if parsed_question:
+                            st.session_state['questions'].append(parsed_question)
+                            generated_themes.add(current_sub_tema)
+                        else:
+                            st.warning(f"⚠️ No se pudo parsear una pregunta. Reintentando... Posible formato inesperado de Gemini para: '{current_sub_tema}'.")
                 if len(st.session_state['questions']) == st.session_state['total_questions']:
-                    st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
+                     st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
 
         # Lógica para mostrar preguntas y manejar la navegación durante el examen
         if st.session_state.get('exam_active_session', False) and not st.session_state['exam_finished']:
@@ -540,72 +457,123 @@ def main():
                 # Barra de progreso al estilo Duolingo
                 progress_percentage = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
                 st.progress(progress_percentage / 100, text=f"Progreso: {int(progress_percentage)}%")
+                st.write(f"Pregunta {st.session_state['current_question_index'] + 1} de {st.session_state['total_questions']}")
 
-                current_q = st.session_state['questions'][st.session_state['current_question_index']]
-                st.subheader(f"Pregunta {st.session_state['current_question_index'] + 1} de {st.session_state['total_questions']}")
-                st.markdown(current_q['question'])
+                current_question = st.session_state['questions'][st.session_state['current_question_index']]
 
-                selected_option = st.radio("Elige una opción:", current_q['options'], key=f"q_{st.session_state['current_question_index']}")
+                try:
+                    match = re.search(r'sobre "([^"]+)"', current_question['question'])
+                    if match:
+                        display_topic = match.group(1)
+                    else:
+                        display_topic = tema_seleccionado
+                except Exception:
+                    display_topic = tema_seleccionado
 
-                col_prev, col_next = st.columns(2)
+                st.markdown(f"**Tema cubierto:** *{display_topic}*")
+                st.write(current_question['question'])
 
-                with col_prev:
-                    if st.button("Anterior", key="prev_button", disabled=(st.session_state['current_question_index'] == 0)):
-                        st.session_state['current_question_index'] -= 1
-                        st.rerun()
-                with col_next:
-                    if st.button("Siguiente", key="next_button"):
-                        # Guardar respuesta del usuario antes de avanzar
-                        user_choice_char = selected_option[0] # Obtener la letra (A, B, C, D)
-                        user_choice_full_text = selected_option # Guardar el texto completo de la opción
+                selected_option_label = st.radio(
+                    "Elige una opción:",
+                    current_question['options'],
+                    key=f"q_radio_{st.session_state['current_question_index']}"
+                )
 
+                if st.button("Comprobar :white_check_mark:", key=f"check_answer_button_{st.session_state['current_question_index']}"):
+                    if selected_option_label:
+                        user_answer_char = selected_option_label[0]
+
+                        # Almacenar la respuesta del usuario para revisión posterior
                         st.session_state['user_answers'].append({
                             'question_index': st.session_state['current_question_index'],
-                            'user_choice_char': user_choice_char,
-                            'user_choice_full_text': user_choice_full_text, # Guardar el texto completo
-                            'correct_char': current_q['correct_answer_char']
+                            'user_choice_char': user_answer_char,
+                            'correct_char': current_question['correct_answer_char'],
+                            'question_text': current_question['question'],
+                            'explanation': current_question['explanation']
                         })
 
-                        if user_choice_char == current_q['correct_answer_char']:
+                        if user_answer_char == current_question['correct_answer_char']:
                             st.session_state['score'] += 1
+                            # Feedback visual de éxito
+                            st.success("🎉 ¡Correcto! ¡Sigue así! 🎉")
+                            st.balloons()
+                            # time.sleep(1)
+                        else:
+                            # Feedback visual de error
+                            st.error(f"❌ Incorrecto. La respuesta correcta era **{current_question['correct_answer_char']}**.")
+                            st.markdown(f"**Explicación:** {current_question['explanation']}")
 
+                            q_lower = current_question['question'].lower()
+                            if "capa física" in q_lower or "codificación" in q_lower:
+                                st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Modem_diagram.svg/400px-Modem_diagram.svg.png",
+                                         caption="Ejemplo de Codificación en Capa Física")
+                                st.markdown("_Este diagrama ilustra cómo se transforman los datos en señales físicas._")
+                            elif "conmutación de paquetes" in q_lower:
+                                st.video("https://www.youtube.com/watch?v=yW6hI1F8K-0")
+                                st.markdown("_Video: ¿Cómo funciona la conmutación de paquetes?_")
+
+                        # Mover a la siguiente pregunta
                         st.session_state['current_question_index'] += 1
-                        st.rerun()
+                        st.session_state['current_progress'] = (st.session_state['current_question_index'] / st.session_state['total_questions']) * 100
+
+                        # Si se terminó el examen
+                        if st.session_state['current_question_index'] >= st.session_state['total_questions']:
+                            st.session_state['exam_finished'] = True
+                            st.session_state['exam_active_session'] = False
+                        else:
+                            st.rerun()
+                    else:
+                        st.warning("Por favor, selecciona una opción antes de comprobar.")
             else:
                 st.session_state['exam_finished'] = True
                 st.session_state['exam_active_session'] = False
-                st.rerun() # Para mostrar los resultados finales
-        elif st.session_state['exam_finished']:
-            st.success(f"¡Examen Completado! Tu puntuación final es: {st.session_state['score']} de {st.session_state['total_questions']}")
 
-            # Generar el PDF
+        # Lógica para mostrar los resultados finales del examen
+        if st.session_state['exam_finished']:
+            st.balloons()
+            st.success(f"🎉 ¡Examen Terminado! Has respondido correctamente a **{st.session_state['score']}** de **{st.session_state['total_questions']}** preguntas. ¡Felicidades! 🎉")
+            st.markdown("---")
+            st.subheader("Resultados Detallados:")
+
+            st.markdown(f"**Puntos obtenidos en este examen:** {st.session_state['score'] * 10} XP (por ejemplo)")
+
+            for i, user_ans in enumerate(st.session_state['user_answers']):
+                question_info = st.session_state['questions'][user_ans['question_index']]
+                st.markdown(f"---")
+                st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}")
+                st.markdown(f"Tu respuesta: **{user_ans['user_choice_char']}**")
+                st.markdown(f"Respuesta correcta: **{user_ans['correct_char']}**")
+
+                if user_ans['user_choice_char'] == user_ans['correct_char']:
+                    st.success("✅ ¡Correcto!")
+                else:
+                    st.error("❌ Incorrecto.")
+                    st.markdown(f"**Explicación:** {question_info['explanation']}")
+
+            st.markdown("---")
+
+            # --- Botón de descarga de PDF ---
             pdf_buffer = generate_exam_pdf(
                 st.session_state['score'],
                 st.session_state['total_questions'],
                 st.session_state['user_answers'],
-                st.session_state['questions'],
-                user_name=st.session_state['user_name'],
-                level=st.session_state['exam_level'],
-                topic=st.session_state['exam_topic']
+                st.session_state['questions'] # Pasar todas las preguntas para tener los textos completos
             )
-            pdf_bytes = pdf_buffer.getvalue()
-            b64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-            pdf_display = f'<embed src="data:application/pdf;base64,{b64_pdf}" width="700" height="1000" type="application/pdf">'
-            st.markdown(pdf_display, unsafe_allow_html=True)
-
             st.download_button(
-                label="Descargar Resultados del Examen (PDF)",
-                data=pdf_bytes,
-                file_name=f"Resultados_Examen_Redes_{st.session_state['user_name']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                mime="application/pdf"
+                label="Descargar Resultados del Examen como PDF 📄",
+                data=pdf_buffer,
+                file_name=f"Resultados_Examen_Redes_{time.strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf",
+                key="download_pdf_button"
             )
+            # --- Fin Botón de descarga de PDF ---
 
-            if st.button("Volver al Inicio", key="reset_exam_button"):
-                # Resetear todas las variables de estado relacionadas con el examen
-                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'current_activity', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam', 'user_name', 'exam_level', 'exam_topic']:
+            if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
+                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()
 
+# --- Punto de Entrada de la Aplicación ---
 if __name__ == "__main__":
     main()
