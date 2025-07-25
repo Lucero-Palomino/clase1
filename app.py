@@ -154,7 +154,7 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
                                alignment=TA_CENTER, spaceAfter=20))
     # --- MODIFICACIONES AQUÍ para la información del estudiante/examen ---
     styles.add(ParagraphStyle(name='StudentInfoStyle', fontSize=9, leading=10, # Más pequeño
-                               alignment=TA_LEFT, spaceAfter=2)) # Alineado a la derecha y más junto
+                               alignment=TA_RIGHT, spaceAfter=2)) # Alineado a la derecha y más junto
     styles.add(ParagraphStyle(name='HeaderStyle', fontSize=12, leading=16,
                                alignment=TA_RIGHT, spaceAfter=10, fontName='Helvetica-Bold'))
     styles.add(ParagraphStyle(name='NormalStyle', fontSize=10, leading=12,
