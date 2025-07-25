@@ -4,6 +4,8 @@ import os
 import random
 import re
 import time
+from datetime import datetime
+import pytz # Para manejar zonas horarias
 
 # --- Importaciones para PDF ---
 from reportlab.lib.pagesizes import letter
@@ -140,7 +142,7 @@ def parse_multiple_choice_question(raw_data):
 
 
 # --- FUNCIÓN PARA GENERAR PDF ---
-def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_name="Estudiante"):
+def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_name="Estudiante", level="N/A", topic="N/A"):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
                             rightMargin=inch, leftMargin=inch,
@@ -168,10 +170,16 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
 
     story = []
 
+    # Obtener la hora actual en la zona horaria de Puno, Perú
+    peru_tz = pytz.timezone('America/Lima') # Lima es la zona horaria para Puno, Perú
+    current_time_peru = datetime.now(peru_tz).strftime('%Y-%m-%d %H:%M:%S')
+
     # Título y nombre del estudiante
     story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
     story.append(Paragraph(f"Estudiante: {user_name}", styles['SubTitleStyle']))
-    story.append(Paragraph(f"Fecha: {time.strftime('%Y-%m-%d %H:%M')}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Nivel: {level}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Tema General: {topic}", styles['SubTitleStyle']))
+    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['SubTitleStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
     # Resumen
@@ -181,8 +189,8 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     # Detalles de cada pregunta
     for i, user_ans_data in enumerate(user_answers):
         question_info = all_questions[user_ans_data['question_index']]
-        story.append(Paragraph(f"--- Pregunta {i + 1} ---", styles['HeaderStyle']))
-        story.append(Paragraph(f"**Pregunta:** {question_info['question']}", styles['NormalStyle']))
+        # Cambiado de "--- Pregunta X ---" a "X)"
+        story.append(Paragraph(f"**{i + 1})** {question_info['question']}", styles['NormalStyle']))
         story.append(Spacer(1, 0.1 * inch))
 
         # Mostrar todas las opciones de la pregunta
@@ -232,11 +240,6 @@ def main():
     st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios 🌐")
     st.markdown("---")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
-
-    # Eliminamos el st.text_input de aquí, se moverá más abajo.
-    # if 'user_name' not in st.session_state:
-    #     st.session_state['user_name'] = ""
-    # st.session_state['user_name'] = st.text_input("Ingresa tu nombre para el examen:", value=st.session_state['user_name'], key="user_name_input")
 
     temas_principales = ["Redes LAN", "Protocolos de Red", "Modelos OSI/TCP-IP", "Seguridad de Red", "Dispositivos de Red", "Direccionamiento IP", "Enrutamiento", "Conmutación", "Subredes", "Capa Física"]
 
@@ -451,6 +454,10 @@ def main():
             st.session_state['name_entered_for_exam'] = False
         if 'user_name' not in st.session_state: # Asegurar que 'user_name' exista
             st.session_state['user_name'] = ""
+        # Guardar nivel y tema seleccionados para el PDF
+        st.session_state['exam_level'] = nivel_estudiante
+        st.session_state['exam_topic'] = tema_seleccionado
+
 
         # --- Flujo para pedir el nombre solo si se presiona "Tomar examen" ---
         if not st.session_state['name_entered_for_exam']:
@@ -603,7 +610,9 @@ def main():
                 st.session_state['total_questions'],
                 st.session_state['user_answers'],
                 st.session_state['questions'],
-                user_name=pdf_user_name
+                user_name=pdf_user_name,
+                level=st.session_state.get('exam_level', 'N/A'), # Pasa el nivel
+                topic=st.session_state.get('exam_topic', 'N/A')   # Pasa el tema
             )
             st.download_button(
                 label="Descargar Resultados del Examen como PDF 📄",
@@ -616,7 +625,7 @@ def main():
             for i, user_ans in enumerate(st.session_state['user_answers']):
                 question_info = st.session_state['questions'][user_ans['question_index']]
                 st.markdown(f"---")
-                st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}")
+                st.markdown(f"**Pregunta {i + 1}:** {question_info['question']}") # Aquí mantengo "Pregunta X:" para el display en web
 
                 st.markdown("**Opciones:**")
                 for option_text in question_info['options']:
@@ -642,7 +651,7 @@ def main():
             st.markdown("---")
 
             if st.button("Reiniciar Examen :repeat:", key="reset_exam_button_final"):
-                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam']:
+                for key in ['exam_started', 'current_question_index', 'score', 'questions', 'user_answers', 'exam_finished', 'exam_active_session', 'current_progress', 'total_questions', 'name_entered_for_exam', 'exam_level', 'exam_topic']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.session_state['user_name'] = "" # Limpiar el nombre al reiniciar examen
