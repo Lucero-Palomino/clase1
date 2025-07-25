@@ -137,9 +137,8 @@ def parse_multiple_choice_question(raw_data):
         'explanation': explanation
     }
 
-
-# --- FUNCIÓN PARA GENERAR PDF ---
-def generate_exam_pdf(score, total_questions, user_answers, all_questions):
+ # --- FUNCIÓN PARA GENERAR PDF ---
+def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_name="Estudiante", level="N/A", topic="N/A"):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
                             rightMargin=inch, leftMargin=inch,
@@ -147,43 +146,75 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions):
     styles = getSampleStyleSheet()
 
     # Estilos personalizados para el PDF
-    styles.add(ParagraphStyle(name='TitleStyle', fontSize=24, leading=28,
+    styles.add(ParagraphStyle(name='TitleStyle', fontSize=20, leading=24,
                                alignment=TA_CENTER, spaceAfter=20))
-    styles.add(ParagraphStyle(name='SubTitleStyle', fontSize=16, leading=20,
-                               alignment=TA_CENTER, spaceAfter=15))
-    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=14, leading=18,
+    # --- MODIFICACIONES AQUÍ para la información del estudiante/examen ---
+    styles.add(ParagraphStyle(name='StudentInfoStyle', fontSize=9, leading=10, # Más pequeño
+                               alignment=TA_RIGHT, spaceAfter=2)) # Alineado a la derecha y más junto
+    styles.add(ParagraphStyle(name='HeaderStyle', fontSize=12, leading=16,
                                alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='NormalStyle', fontSize=12, leading=14,
-                               alignment=TA_LEFT, spaceAfter=8))
-    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=12, leading=14,
-                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=12, leading=14,
-                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=11, leading=13,
-                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray'))
+    styles.add(ParagraphStyle(name='NormalStyle', fontSize=10, leading=12,
+                               alignment=TA_LEFT, spaceAfter=8, leftIndent=10))
+    styles.add(ParagraphStyle(name='OptionStyle', fontSize=9, leading=11,
+                               alignment=TA_LEFT, spaceAfter=4, leftIndent=30))
+    styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=10, leading=12,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold', leftIndent=10))
+    styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=10, leading=12,
+                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold', leftIndent=10))
+    styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=9, leading=11,
+                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray', leftIndent=20))
 
 
     story = []
 
-    # Título
-    story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
-    story.append(Paragraph(f"Fecha: {time.strftime('%Y-%m-%d %H:%M')}", styles['SubTitleStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    # Obtener la hora actual en la zona horaria de Puno, Perú
+    peru_tz = pytz.timezone('America/Lima') # Lima es la zona horaria para Puno, Perú
+    current_time_peru = datetime.now(peru_tz).strftime('%Y-%m-%d %H:%M:%S')
 
-    # Resumen
+    # Título principal del examen
+    story.append(Paragraph("Resultados del Examen de Arquitectura de Redes", styles['TitleStyle']))
+    story.append(Spacer(1, 0.2 * inch)) # Espacio después del título principal
+
+    # --- INFORMACIÓN DEL ESTUDIANTE/EXAMEN (MOVIDO Y AJUSTADO) ---
+    # Usamos un Frame o una tabla para controlar mejor la posición
+    # Para simplicidad sin usar Frames complejos, podemos usar Paragraphs con TA_RIGHT
+    # y control de espaciado.
+    story.append(Paragraph(f"Estudiante: {user_name}", styles['StudentInfoStyle']))
+    story.append(Paragraph(f"Nivel: {level}", styles['StudentInfoStyle']))
+    story.append(Paragraph(f"Tema General: {topic}", styles['StudentInfoStyle']))
+    story.append(Paragraph(f"Fecha y Hora: {current_time_peru}", styles['StudentInfoStyle']))
+    story.append(Spacer(1, 0.3 * inch)) # Espacio después de la información del estudiante
+
+    # Resumen de puntuación
     story.append(Paragraph(f"Puntuación Final: {score} / {total_questions}", styles['HeaderStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
     # Detalles de cada pregunta
-    for i, user_ans in enumerate(user_answers):
-        question_info = all_questions[user_ans['question_index']]
-        story.append(Paragraph(f"--- Pregunta {i + 1} ---", styles['HeaderStyle']))
-        story.append(Paragraph(f"**Pregunta:** {question_info['question']}", styles['NormalStyle']))
+    for i, user_ans_data in enumerate(user_answers):
+        question_info = all_questions[user_ans_data['question_index']]
+        story.append(Paragraph(f"**{i + 1})** {question_info['question']}", styles['NormalStyle']))
+        story.append(Spacer(1, 0.1 * inch))
 
-        story.append(Paragraph(f"Tu respuesta: **{user_ans['user_choice_char']}**", styles['NormalStyle']))
-        story.append(Paragraph(f"Respuesta correcta: **{user_ans['correct_char']}**", styles['NormalStyle']))
+        # Mostrar todas las opciones de la pregunta
+        story.append(Paragraph("Opciones:", styles['NormalStyle']))
+        for option_text in question_info['options']:
+            story.append(Paragraph(option_text, styles['OptionStyle']))
+        story.append(Spacer(1, 0.1 * inch))
 
-        if user_ans['user_choice_char'] == user_ans['correct_char']:
+
+        # Mostrar la respuesta del usuario de forma completa
+        story.append(Paragraph(f"Tu respuesta: **{user_ans_data['user_choice_full_text']}**", styles['NormalStyle']))
+
+        # Mostrar la respuesta correcta de forma completa
+        correct_option_full_text = ""
+        for option in question_info['options']:
+            if option.startswith(user_ans_data['correct_char'] + ')'):
+                correct_option_full_text = option
+                break
+        story.append(Paragraph(f"Respuesta correcta: **{correct_option_full_text}**", styles['NormalStyle']))
+
+
+        if user_ans_data['user_choice_char'] == user_ans_data['correct_char']:
             story.append(Paragraph("Estado: Correcto ✅", styles['CorrectAnswerStyle']))
         else:
             story.append(Paragraph("Estado: Incorrecto ❌", styles['IncorrectAnswerStyle']))
@@ -191,7 +222,7 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions):
 
         story.append(Spacer(1, 0.2 * inch))
         if (i + 1) % 3 == 0 and (i + 1) != total_questions: # Añade un salto de página cada 3 preguntas
-             story.append(PageBreak())
+            story.append(PageBreak())
 
     doc.build(story)
     buffer.seek(0)
@@ -207,7 +238,7 @@ def main():
     except FileNotFoundError:
         st.error("Error: El archivo 'style.css' no se encontró. Asegúrate de que esté en la misma carpeta que 'app.py'.")
 
-    st.title("👨‍🏫 Chatbot de ARQUITECTURA DE REDES para Universitarios 🌐")
+    st.title("👨‍🏫 ARQUITECTURA DE REDES 🌐")
     st.markdown("---")
     st.markdown("¡Bienvenido! Estoy aquí para ayudarte a **dominar** la Arquitectura de Redes. Selecciona una opción para comenzar tu aprendizaje o desafiarte con un examen. ✨")
 
@@ -305,54 +336,55 @@ def main():
             st.markdown("### 📚 Recursos Adicionales para Profundizar")
             st.markdown("Aquí te dejo enlaces a papers, documentos y videos clave para este tema:")
 
-            recursos_por_tema = {
+             recursos_por_tema = {
                 "Redes LAN": [
-                    {"tipo": "paper", "titulo": "IEEE 802.3 (Ethernet Standard)", "url": "https://standards.ieee.org/ieee/802.3/7328/"},
-                    {"tipo": "documento", "titulo": "Introducción a las Redes LAN (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/lan-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Fundamentos de Redes LAN (YouTube)", "url": "https://www.youtube.com/watch?v=F_f0S96sM8w"}
+                    {"tipo": "Referencia", "titulo": "¿Qué es una LAN?", "url": "https://www-cisco-com.translate.goog/c/en/us/products/switches/what-is-a-lan-local-area-network.html?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=tc"},
+                    {"tipo": "Referencia", "titulo": "Red LAN", "url": "https://www.godaddy.com/resources/latam/tecnologia/que-es-una-red-lan"},
+                    {"tipo": "video", "titulo": "Fundamentos de Redes LAN (YouTube)", "url": "https://www.youtube.com/watch?v=VD5k_0q_fus"}
                 ],
                 "Protocolos de Red": [
-                    {"tipo": "paper", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
-                    {"tipo": "documento", "titulo": "Protocolos TCP/IP (IBM)", "url": "https://www.ibm.com/docs/es/aix/7.2?topic=protocols-tcpip"},
-                    {"tipo": "video", "titulo": "Qué son los protocolos de red (YouTube)", "url": "https://www.youtube.com/watch?v=0n-rJ7W-47g"}
+                    {"tipo": "Referencia", "titulo": "Definición", "url": "https://www.cloudflare.com/es-es/learning/network-layer/what-is-a-protocol/"},
+                    {"tipo": "Referencia", "titulo": "(IBM)", "url": "https://www.ibm.com/docs/es/aix/7.2.0?topic=protocols-internet-network-level"},
+                    {"tipo": "video", "titulo": "Qué son los protocolos de red", "url": "https://www.youtube.com/watch?v=hJqu97N_zhA&pp=ygURUHJvdG9jb2xvcyBkZSBSZWQ%3D"}
                 ],
                 "Modelos OSI/TCP-IP": [
-                    {"tipo": "paper", "titulo": "ISO/IEC 7498 (OSI Model)", "url": "https://www.iso.org/standard/14299.html"},
+                    {"tipo": "Referencia", "titulo": "ISO/IEC 7498 (OSI Model)", "url": "https://www.iso.org/standard/14299.html"},
                     {"tipo": "documento", "titulo": "Comparación OSI y TCP/IP (Microsoft)", "url": "https://learn.microsoft.com/es-es/troubleshoot/windows-server/networking/tcpip-layer-model-vs-osi-layer-model"},
-                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=vv4y_m5_4gQ"}
+                    {"tipo": "video", "titulo": "Modelo OSI Explicado (YouTube)", "url": "https://www.youtube.com/watch?v=MqpIJLmMny8&pp=ygUSTW9kZWxvcyBPU0kvVENQLUlQ"}
                 ],
                 "Seguridad de Red": [
-                    {"tipo": "documento", "titulo": "NIST SP 800-12 (Introduction to Computer Security)", "url": "https://csrc.nist.gov/publications/detail/sp/800-12/rev-1/archive/1995-10-01"},
+                    {"tipo": "Referencia", "titulo": "NIST SP 800-12 (Introduction to Computer Security)", "url": "https://csrc.nist.gov/publications/detail/sp/800-12/rev-1/archive/1995-10-01"},
                     {"tipo": "documento", "titulo": "Conceptos Básicos de Ciberseguridad (CISCO)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/cybersecurity-fundamentals.html"},
                     {"tipo": "video", "titulo": "Fundamentos de Ciberseguridad (YouTube)", "url": "https://www.youtube.com/watch?v=Vl3rKqM9wI0"}
                 ],
                 "Dispositivos de Red": [
-                    {"tipo": "documento", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=nN4rN9wN7v8"}
+                    {"tipo": "Referencia", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
+                    {"tipo": "video", "titulo": "Tipos de Dispositivos de Red (YouTube)", "url": "https://www.youtube.com/watch?v=oCzPbiN5wao&pp=ygUTRGlzcG9zaXRpdm9zIGRlIFJlZA%3D%3D"}
                 ],
                 "Direccionamiento IP": [
-                    {"tipo": "paper", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
+                    {"tipo": "Referencia", "titulo": "RFC 791 (Internet Protocol)", "url": "https://datatracker.ietf.org/doc/html/rfc791"},
                     {"tipo": "documento", "titulo": "Direccionamiento IP (UNAM)", "url": "http://www.dgsca.unam.mx/publicaciones/curso/ip/ip-2.html"},
-                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=0d854y1t_1M"}
+                    {"tipo": "video", "titulo": "Qué es una Dirección IP y cómo funciona (YouTube)", "url": "https://www.youtube.com/watch?v=801xu7tGEfA&pp=ygUUIkRpcmVjY2lvbmFtaWVudG8gSVA%3D"}
                 ],
                 "Enrutamiento": [
-                    {"tipo": "paper", "titulo": "RFC 1058 (RIP Version 1)", "url": "https://datatracker.ietf.org/doc/html/rfc1058"},
+                    {"tipo": "Referencia", "titulo": "RFC 1058 (RIP Version 1)", "url": "https://datatracker.ietf.org/doc/html/rfc1058"},
                     {"tipo": "documento", "titulo": "Introducción al Enrutamiento (Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/routing-fundamentals.html"},
-                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=W-r49j2_eI4"}
+                    {"tipo": "video", "titulo": "Enrutamiento Estático y Dinámico (YouTube)", "url": "https://www.youtube.com/watch?v=nuHUTToftoQ&pp=ygUMRW5ydXRhbWllbnRv"}
                 ],
                 "Conmutación": [
-                    {"tipo": "documento", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
+                    {"tipo": "Referencia", "titulo": "Conceptos de Switching (CCNA - Cisco)", "url": "https://www.cisco.com/c/es_mx/training-events/getting-started-with-networking/switching-fundamentals.html"},
                     {"tipo": "video", "titulo": "Switches: ¿Qué son y cómo funcionan? (YouTube)", "url": "https://www.youtube.com/watch?v=u8-hJv3f-9k"}
                 ],
                 "Subredes": [
-                    {"tipo": "documento", "titulo": "Subnetting (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Subred"},
+                    {"tipo": "Referencia", "titulo": "Subnetting (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Subred"},
                     {"tipo": "video", "titulo": "Tutorial de Subnetting paso a paso (YouTube)", "url": "https://www.youtube.com/watch?v=eE7yG0XzFqc"}
                 ],
                 "Capa Física": [
-                    {"tipo": "documento", "titulo": "Capa Física del Modelo OSI (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Capa_f%C3%ADsica"},
-                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=S2uM-w7y1lM"}
+                    {"tipo": "Referencia", "titulo": "Capa Física del Modelo OSI (Wikipedia)", "url": "https://es.wikipedia.org/wiki/Capa_f%C3%ADsica"},
+                    {"tipo": "video", "titulo": "La capa física del modelo OSI (YouTube)", "url": "https://www.youtube.com/watch?v=wfmExYHthbA&pp=ygUMQ2FwYSBGw61zaWNh0gcJCccJAYcqIYzv"}
                 ],
             }
+                
 
             if tema_seleccionado in recursos_por_tema:
                 for recurso in recursos_por_tema[tema_seleccionado]:
