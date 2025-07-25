@@ -1,3 +1,4 @@
+
 import streamlit as st
 import google.generativeai as genai
 import os
@@ -156,17 +157,17 @@ def generate_exam_pdf(score, total_questions, user_answers, all_questions, user_
     styles.add(ParagraphStyle(name='StudentInfoStyle', fontSize=9, leading=10, # Más pequeño
                                alignment=TA_RIGHT, spaceAfter=2)) # Alineado a la derecha y más junto
     styles.add(ParagraphStyle(name='HeaderStyle', fontSize=12, leading=16,
-                               alignment=TA_RIGHT, spaceAfter=10, fontName='Helvetica-Bold'))
+                               alignment=TA_LEFT, spaceAfter=10, fontName='Helvetica-Bold'))
     styles.add(ParagraphStyle(name='NormalStyle', fontSize=10, leading=12,
-                               alignment=TA_RIGHT, spaceAfter=8, leftIndent=10))
+                               alignment=TA_LEFT, spaceAfter=8, leftIndent=10))
     styles.add(ParagraphStyle(name='OptionStyle', fontSize=9, leading=11,
-                               alignment=TA_RIGHT, spaceAfter=4, leftIndent=30))
+                               alignment=TA_LEFT, spaceAfter=4, leftIndent=30))
     styles.add(ParagraphStyle(name='CorrectAnswerStyle', fontSize=10, leading=12,
-                               alignment=TA_RIGHT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold', leftIndent=10))
+                               alignment=TA_LEFT, spaceAfter=8, textColor='green', fontName='Helvetica-Bold', leftIndent=10))
     styles.add(ParagraphStyle(name='IncorrectAnswerStyle', fontSize=10, leading=12,
-                               alignment=TA_RIGHT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold', leftIndent=10))
+                               alignment=TA_LEFT, spaceAfter=8, textColor='red', fontName='Helvetica-Bold', leftIndent=10))
     styles.add(ParagraphStyle(name='ExplanationStyle', fontSize=9, leading=11,
-                               alignment=TA_RIGHT, spaceBefore=5, spaceAfter=10, textColor='gray', leftIndent=20))
+                               alignment=TA_LEFT, spaceBefore=5, spaceAfter=10, textColor='gray', leftIndent=20))
 
 
     story = []
